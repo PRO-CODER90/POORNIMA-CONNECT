@@ -1,8 +1,13 @@
-// 5 failures / 10 min per key. Uses Upstash Redis (REST) when UPSTASH_REDIS_REST_URL and
-// UPSTASH_REDIS_REST_TOKEN are set, so the limit is shared by every serverless instance.
-// Without them it falls back to per-instance memory (fine for local dev / demos).
-const WINDOW_S = 600;
-const MAX_FAILS = 5;
+// Counts events per key inside a window. Uses Upstash Redis (REST) when UPSTASH_REDIS_REST_URL and
+// UPSTASH_REDIS_REST_TOKEN are set, so the limit is shared by every serverless instance. Without
+// them it falls back to per-instance memory (fine for local dev / demos, weak on Vercel).
+export interface Limit {
+  max: number;
+  windowS: number;
+}
+export const LOGIN_LIMIT: Limit = { max: 5, windowS: 600 }; // 5 failures / 10 min
+export const FORGOT_LIMIT: Limit = { max: 5, windowS: 900 }; // 5 requests / 15 min
+export const MAIL_LIMIT: Limit = { max: 3, windowS: 900 }; // 3 emails / 15 min per account
 
 const URL_ = process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -19,34 +24,34 @@ async function redis(cmds: (string | number)[][]) {
   return (await res.json()) as { result: unknown }[];
 }
 
-function recent(key: string) {
+function recent(key: string, windowS: number) {
   const now = Date.now();
-  const list = (mem.get(key) ?? []).filter((t) => now - t < WINDOW_S * 1000);
+  const list = (mem.get(key) ?? []).filter((t) => now - t < windowS * 1000);
   mem.set(key, list);
   return list;
 }
 
-export async function isLimited(...keys: string[]): Promise<boolean> {
-  if (!URL_ || !TOKEN) return keys.some((k) => recent(k).length >= MAX_FAILS);
+export async function isLimited(keys: string[], { max, windowS }: Limit = LOGIN_LIMIT): Promise<boolean> {
+  if (!URL_ || !TOKEN) return keys.some((k) => recent(k, windowS).length >= max);
   try {
     const out = await redis(keys.map((k) => ["GET", `rl:${k}`]));
-    return out.some((r) => Number(r.result ?? 0) >= MAX_FAILS);
+    return out.some((r) => Number(r.result ?? 0) >= max);
   } catch (e) {
     console.error("rate limit store unavailable (failing open)", e);
     return false;
   }
 }
 
-export async function recordFailure(...keys: string[]) {
-  if (!URL_ || !TOKEN) return keys.forEach((k) => recent(k).push(Date.now()));
+export async function recordHit(keys: string[], { windowS }: Limit = LOGIN_LIMIT) {
+  if (!URL_ || !TOKEN) return keys.forEach((k) => recent(k, windowS).push(Date.now()));
   try {
-    await redis(keys.flatMap((k) => [["INCR", `rl:${k}`], ["EXPIRE", `rl:${k}`, WINDOW_S, "NX"]]));
+    await redis(keys.flatMap((k) => [["INCR", `rl:${k}`], ["EXPIRE", `rl:${k}`, windowS, "NX"]]));
   } catch (e) {
     console.error("rate limit store unavailable", e);
   }
 }
 
-export async function clearFailures(...keys: string[]) {
+export async function clearHits(keys: string[]) {
   if (!URL_ || !TOKEN) return keys.forEach((k) => mem.delete(k));
   try {
     await redis(keys.map((k) => ["DEL", `rl:${k}`]));

@@ -1,0 +1,32 @@
+CREATE TABLE IF NOT EXISTS users (
+  id              SERIAL PRIMARY KEY,
+  role            TEXT NOT NULL CHECK (role IN ('student','faculty')),
+  enrollment_no   TEXT NOT NULL UNIQUE,            -- unique across roles: the role is derived from the record
+  name            TEXT NOT NULL,
+  email           TEXT NOT NULL UNIQUE,            -- stored lowercase
+  password_hash   TEXT,                            -- NULL = new user, password not set yet
+  token_version   INTEGER NOT NULL DEFAULT 0,      -- bump to invalidate all old sessions
+  password_set_at TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (email = lower(email))
+);
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  purpose     TEXT NOT NULL CHECK (purpose IN ('setup','reset')),
+  token_hash  TEXT NOT NULL UNIQUE,                -- SHA-256 of the token; the raw token is never stored
+  expires_at  TIMESTAMPTZ NOT NULL,
+  used_at     TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS auth_tokens_user_purpose ON auth_tokens (user_id, purpose);
+
+-- Sample users. password_hash stays NULL, which marks them as new users.
+INSERT INTO users (role, enrollment_no, name, email) VALUES
+  ('student', '20070', 'HJ',     '2024bcaaidshj20070@poornima.edu.in'),
+  ('student', '18915', 'VS',     '2024bcaaidsvs18915@poornima.edu.in'),
+  ('student', '18221', 'Aryan',  '2024bcaaidshj18221@poornima.edu.in'),
+  ('faculty', '1234',  'Rockey', 'rockey.kumar@poornima.edu.in'),
+  ('faculty', '1532',  'Kavita', 'kavita.jain@poornima.edu.in')
+ON CONFLICT DO NOTHING;

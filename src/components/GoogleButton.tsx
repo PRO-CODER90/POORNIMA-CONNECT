@@ -24,16 +24,17 @@ interface Props {
   onSuccess: (redirect: string) => void;
   onError: (message: string) => void;
   onBusy: (busy: boolean) => void;
+  onSetupRequired: (token: string, name?: string) => void;
 }
 
 /** Google's own button. If it can't be used it only affects this area, never the credentials form. */
-export default function GoogleButton({ onSuccess, onError, onBusy }: Props) {
+export default function GoogleButton({ onSuccess, onError, onBusy, onSetupRequired }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   // Keep the latest callbacks without re-initialising Google on every render.
-  const cb = useRef({ onSuccess, onError, onBusy });
+  const cb = useRef({ onSuccess, onError, onBusy, onSetupRequired });
   useEffect(() => {
-    cb.current = { onSuccess, onError, onBusy };
+    cb.current = { onSuccess, onError, onBusy, onSetupRequired };
   });
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function GoogleButton({ onSuccess, onError, onBusy }: Props) {
           });
           const data = await res.json();
           if (data.success) cb.current.onSuccess(data.redirect ?? "/dashboard");
+          else if (data.code === "SETUP_REQUIRED" && data.setupToken) cb.current.onSetupRequired(data.setupToken, data.name);
           else cb.current.onError(data.message ?? ERRORS.GOOGLE_FAILED.message);
         } catch {
           cb.current.onError(ERRORS.NETWORK_ERROR.message);
@@ -72,7 +74,7 @@ export default function GoogleButton({ onSuccess, onError, onBusy }: Props) {
   if (!CLIENT_ID) {
     return (
       <p className="text-xs text-white/70">
-        Google sign-in is temporarily unavailable. Please use your enrollment number and passcode.
+        Google sign-in is temporarily unavailable. Please use your enrollment number and password.
       </p>
     );
   }

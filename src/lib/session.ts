@@ -27,4 +27,6 @@ export interface SessionPayload {
   name: string;
   role: "student" | "faculty";
   email: string;
+  uid: number;
+  tv: number; // token_version at login; a password change bumps it and kills older sessions
 }

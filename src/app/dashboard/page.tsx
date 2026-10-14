@@ -1,10 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
-import { SESSION_COOKIE, verifyJwt, type SessionPayload } from "@/lib/session";
+import { getSession } from "@/lib/auth";
 
 export default async function Dashboard() {
-  const s = await verifyJwt<SessionPayload>((await cookies()).get(SESSION_COOKIE)?.value);
+  const s = await getSession();
   if (!s) redirect("/?error=SESSION_EXPIRED");
 
   const isStudent = s.role === "student";
