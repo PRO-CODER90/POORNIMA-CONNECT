@@ -1,3 +1,4 @@
+// Messages mirror backend/src/Errors.php.
 export const ERRORS = {
   GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
   GOOGLE_FAILED: { status: 401, message: "We couldn't sign you in with Google. Please try again." },
@@ -11,8 +12,3 @@ export const ERRORS = {
 } as const;
 
 export type ErrorCode = keyof typeof ERRORS;
-
-export function fail(code: ErrorCode) {
-  const { status, message } = ERRORS[code];
-  return Response.json({ success: false, code, message }, { status: status || 500 });
-}

@@ -55,7 +55,8 @@ export default function LoginCard({ initialError }: { initialError?: ErrorCode }
   const btnRef = useRef<HTMLDivElement>(null);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const shownError = error ?? (clientId ? null : ERRORS.GOOGLE_FAILED.message);
+  const shownError =
+    error ?? (clientId ? null : "Google sign-in is not configured (missing NEXT_PUBLIC_GOOGLE_CLIENT_ID).");
 
   const onCredential = useCallback(async (credential: string) => {
     setError(null);
