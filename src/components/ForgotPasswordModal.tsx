@@ -33,7 +33,11 @@ export default function ForgotPasswordModal({ onClose }: { onClose: () => void }
         <form onSubmit={submit} className="space-y-3" noValidate>
           <h2 id="fp-title" className="pr-8 text-2xl font-semibold">Reset your password</h2>
           <p className="text-sm text-white/80">
-            Enter your university email or enrollment number. We&apos;ll send a reset link to the email on record.
+            Enter your university email or enrollment number. If you&apos;ve already set a password, we&apos;ll send a
+            reset link to the email on record.
+          </p>
+          <p className="text-xs text-white/65">
+            Haven&apos;t set a password yet? Close this and sign in with your enrollment number to get a setup link.
           </p>
           <div className="relative">
             <label htmlFor="fp-id" className="sr-only">Email or enrollment number</label>

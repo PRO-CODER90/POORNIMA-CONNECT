@@ -23,14 +23,14 @@ export const POST = withErrors(async (req: Request) => {
   after(async () => {
     try {
       const user = await findByEmailOrEnrollment(id);
-      if (!user) return;
+      // Reset links go only to accounts that already have a password. New users activate through
+      // sign-in (enrollment route or Google), which proves they own the email.
+      if (!user || !user.password_hash) return;
       const mailKey = [`forgotmail:${user.id}`];
       if (await isLimited(mailKey, MAIL_LIMIT)) return;
       await recordHit(mailKey, MAIL_LIMIT);
-      // New user (no password yet) gets a setup link, an existing user gets a reset link.
-      const purpose = user.password_hash ? "reset" : "setup";
-      const raw = await createToken(user.id, purpose);
-      await sendEmail(user.email, purpose, user.name, `${base}/?${purpose}=${raw}`);
+      const raw = await createToken(user.id, "reset");
+      await sendEmail(user.email, "reset", user.name, `${base}/?reset=${raw}`);
     } catch (e) {
       console.error("forgot-password email failed", e);
     }

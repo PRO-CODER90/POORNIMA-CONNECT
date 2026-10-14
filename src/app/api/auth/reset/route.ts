@@ -25,6 +25,8 @@ export const POST = withErrors(async (req: Request) => {
 
   const user = await findById(t.user_id);
   if (!user) return fail("LINK_INVALID");
+  // A reset link only ever applies to an account that already has a password.
+  if (t.purpose === "reset" && !user.password_hash) return fail("LINK_INVALID");
   const problem = checkPasswordPolicy(password, user.email, user.enrollment_no);
   if (problem) return fail(problem);
   if (user.password_hash && (await bcrypt.compare(password, user.password_hash))) return fail("PASSWORD_REUSED");

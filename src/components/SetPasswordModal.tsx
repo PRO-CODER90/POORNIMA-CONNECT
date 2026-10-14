@@ -80,9 +80,20 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
       {state === "invalid" && (
         <div className="mt-5 space-y-4">
           <ErrorBanner>{error ?? "This link is invalid or has expired. Please request a new one."}</ErrorBanner>
-          <button type="button" onClick={onRequestNewLink} data-autofocus className={primaryBtn}>
-            Send new link
-          </button>
+          {mode === "reset" ? (
+            <button type="button" onClick={onRequestNewLink} data-autofocus className={primaryBtn}>
+              Send new link
+            </button>
+          ) : (
+            <>
+              <p className="text-sm text-white/80">
+                To get a new setup link, close this and sign in with your enrollment number.
+              </p>
+              <button type="button" onClick={onClose} data-autofocus className={primaryBtn}>
+                Back to sign in
+              </button>
+            </>
+          )}
         </div>
       )}
 
