@@ -11,6 +11,8 @@ export const ERRORS = {
   GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
   SESSION_EXPIRED: { status: 401, message: "Your session has expired. Please sign in again." },
   SERVER_ERROR: { status: 500, message: "Something went wrong on our side. Please try again shortly." },
+  FORBIDDEN: { status: 403, message: "This request isn't allowed." },
+  UNSUPPORTED_MEDIA: { status: 415, message: "Unsupported request format." },
   NETWORK_ERROR: { status: 500, message: "Network error. Check your connection and try again." },
   LINK_INVALID: { status: 400, message: "This link is invalid or has expired. Please request a new one." },
   PASSWORD_MISMATCH: { status: 400, message: "Passwords don't match." },

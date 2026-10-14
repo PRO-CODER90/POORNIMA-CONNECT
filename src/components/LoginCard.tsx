@@ -14,6 +14,9 @@ type ModalState =
   | { k: "emailSent"; message: string }
   | { k: "set"; token: string; mode: SetMode; name?: string };
 
+// Inlined at build time. Without it there is no Google button, so no divider either.
+const googleEnabled = Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+
 interface Props {
   initialError?: ErrorCode;
   initialLink?: { token: string; mode: SetMode };
@@ -71,10 +74,14 @@ export default function LoginCard({ initialError, initialLink }: Props) {
           <Icon d={ICON_USER} />
           <input
             id="enrollment"
+            name="username"
+            type="text"
             className={`${inputCls} pr-4`}
             placeholder="Enrollment No."
             inputMode="numeric"
             autoComplete="username"
+            maxLength={12}
+            aria-describedby={error ? "login-error" : undefined}
             value={enrollmentNo}
             onChange={(e) => setEnrollmentNo(e.target.value)}
           />
@@ -85,10 +92,13 @@ export default function LoginCard({ initialError, initialLink }: Props) {
           <Icon d={ICON_LOCK} />
           <input
             id="password"
+            name="password"
             type={showPass ? "text" : "password"}
             className={`${inputCls} pr-11`}
             placeholder="Password"
             autoComplete="current-password"
+            maxLength={64}
+            aria-describedby={error ? "login-error" : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -105,18 +115,20 @@ export default function LoginCard({ initialError, initialLink }: Props) {
           </button>
         </div>
 
-        {error && <ErrorBanner>{error}</ErrorBanner>}
+        {error && <ErrorBanner id="login-error">{error}</ErrorBanner>}
 
         <button type="submit" disabled={busy} className={primaryBtn}>
           {busy ? (<><Spinner /> Signing in…</>) : (<>Sign In <span aria-hidden="true">→</span></>)}
         </button>
       </form>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-white/70" aria-hidden="true">
-        <span className="h-px flex-1 bg-white/25" /> or <span className="h-px flex-1 bg-white/25" />
-      </div>
+      {googleEnabled && (
+        <div className="my-5 flex items-center gap-3 text-xs text-white/70" aria-hidden="true">
+          <span className="h-px flex-1 bg-white/25" /> or <span className="h-px flex-1 bg-white/25" />
+        </div>
+      )}
 
-      <div className={busy ? "pointer-events-none opacity-60" : ""}>
+      <div className={`${googleEnabled ? "" : "mt-4"} ${busy ? "pointer-events-none opacity-60" : ""}`}>
         <GoogleButton
           onBusy={setBusy}
           onError={setError}

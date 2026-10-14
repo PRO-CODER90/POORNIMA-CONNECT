@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 import { after } from "next/server";
-import { clientIp, fail, readJson, withErrors } from "@/lib/api";
+import { clientIp, fail, guardPost, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { appUrl, sendEmail } from "@/lib/mail";
-import { clearHits, isLimited, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
+import { clearHits, isLimited, LOGIN_IP_LIMIT, LOGIN_LIMIT, MAIL_IP_LIMIT, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
 import { createToken } from "@/lib/tokens";
 import { findByEnrollment, maskEmail } from "@/lib/users";
 
@@ -12,25 +12,37 @@ const DUMMY_HASH = "$2b$12$fSSl.kpupFF3XQBZ8frM9./ZyIiiMcvX9wP3cBvR9ejtyhU2Y41.q
 
 // The role is NOT sent by the client: it comes from the matched record.
 export const POST = withErrors(async (req: Request) => {
+  const refused = guardPost(req);
+  if (refused) return refused;
   const body = await readJson(req);
   const enr = String(body.enrollmentNo ?? "").trim();
   const password = typeof body.password === "string" ? body.password : "";
 
   if (!enr || !password) return fail("MISSING_FIELDS");
-  if (!/^\d{1,20}$/.test(enr)) return fail("INVALID_ENROLLMENT_FORMAT");
+  if (!/^\d{1,12}$/.test(enr)) return fail("INVALID_ENROLLMENT_FORMAT");
 
   // Per IP+enrollment and per enrollment, so spoofed IPs can't brute-force one account.
-  const keys = [`ipenr:${clientIp(req)}:${enr}`, `enr:${enr}`];
-  if (await isLimited(keys)) return fail("TOO_MANY_ATTEMPTS");
+  const ip = clientIp(req);
+  const keys = [`ipenr:${ip}:${enr}`, `enr:${enr}`];
+  const ipKey = [`ipfail:${ip}`];
+  if ((await isLimited(keys, LOGIN_LIMIT)) || (await isLimited(ipKey, LOGIN_IP_LIMIT))) return fail("TOO_MANY_ATTEMPTS");
+  if (password.length > 64) {
+    // Longer than any password we accept: don't spend bcrypt time on it.
+    await recordHit(keys, LOGIN_LIMIT);
+    await recordHit(ipKey, LOGIN_IP_LIMIT);
+    return fail("INVALID_CREDENTIALS");
+  }
 
   const user = await findByEnrollment(enr);
 
   if (user && !user.password_hash) {
     // New user: prove email ownership before a password can be set (otherwise anyone who knows
     // an enrollment number could claim the account first).
-    const mailKeys = [`setupmail:${enr}`, `setupmail-ip:${clientIp(req)}`];
-    if (await isLimited(mailKeys, MAIL_LIMIT)) return fail("TOO_MANY_REQUESTS");
-    await recordHit(mailKeys, MAIL_LIMIT);
+    const mailKey = [`setupmail:${enr}`];
+    const mailIpKey = [`setupmail-ip:${ip}`];
+    if ((await isLimited(mailKey, MAIL_LIMIT)) || (await isLimited(mailIpKey, MAIL_IP_LIMIT))) return fail("TOO_MANY_REQUESTS");
+    await recordHit(mailKey, MAIL_LIMIT);
+    await recordHit(mailIpKey, MAIL_IP_LIMIT);
     try {
       const raw = await createToken(user.id, "setup");
       await sendEmail(user.email, "setup", user.name, `${appUrl()}/?setup=${raw}`);
@@ -47,9 +59,10 @@ export const POST = withErrors(async (req: Request) => {
 
   const matches = await bcrypt.compare(password, user?.password_hash ?? DUMMY_HASH);
   if (!user || !matches) {
-    await recordHit(keys);
+    await recordHit(keys, LOGIN_LIMIT);
+    await recordHit(ipKey, LOGIN_IP_LIMIT);
     return fail("INVALID_CREDENTIALS");
   }
-  after(() => clearHits(keys));
+  after(() => clearHits(keys)); // per-account counters only; the per-IP counter keeps running
   return startSession(user);
 });

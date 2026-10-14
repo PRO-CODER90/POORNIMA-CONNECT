@@ -9,6 +9,7 @@ const serif = Source_Serif_4({ variable: "--font-serif", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "University Portal",
   description: "Sign in to the Poornima University Portal",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

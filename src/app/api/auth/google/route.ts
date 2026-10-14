@@ -1,13 +1,15 @@
-import { clientIp, fail, readJson, withErrors } from "@/lib/api";
+import { clientIp, fail, guardPost, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { verifyGoogleIdToken } from "@/lib/google";
-import { isLimited, recordHit } from "@/lib/rateLimit";
+import { isLimited, LOGIN_IP_LIMIT, recordHit } from "@/lib/rateLimit";
 import { createToken, TTL } from "@/lib/tokens";
 import { findByEmail } from "@/lib/users";
 
 export const POST = withErrors(async (req: Request) => {
+  const refused = guardPost(req);
+  if (refused) return refused;
   const key = [`ip:${clientIp(req)}`];
-  if (await isLimited(key)) return fail("TOO_MANY_ATTEMPTS");
+  if (await isLimited(key, LOGIN_IP_LIMIT)) return fail("TOO_MANY_ATTEMPTS");
 
   let email: string;
   try {
@@ -17,17 +19,17 @@ export const POST = withErrors(async (req: Request) => {
     if (!p.email || p.email_verified !== true) throw new Error("unverified email");
     email = p.email.trim().toLowerCase();
   } catch {
-    await recordHit(key);
+    await recordHit(key, LOGIN_IP_LIMIT);
     return fail("GOOGLE_FAILED");
   }
 
   if (!email.endsWith("@poornima.edu.in")) {
-    await recordHit(key);
+    await recordHit(key, LOGIN_IP_LIMIT);
     return fail("INVALID_DOMAIN");
   }
   const user = await findByEmail(email);
   if (!user) {
-    await recordHit(key);
+    await recordHit(key, LOGIN_IP_LIMIT);
     return fail("NOT_REGISTERED");
   }
 

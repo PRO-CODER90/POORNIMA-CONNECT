@@ -31,7 +31,7 @@ export interface ValidToken {
 }
 
 export async function findValidToken(raw: unknown): Promise<ValidToken | null> {
-  if (typeof raw !== "string" || raw.length < 20 || raw.length > 200) return null;
+  if (typeof raw !== "string" || raw.length < 20 || raw.length > 64) return null;
   const rows = await getDb()<ValidToken[]>`
     SELECT t.id, t.purpose, u.id AS user_id, u.email, u.name, u.password_hash
       FROM auth_tokens t JOIN users u ON u.id = t.user_id

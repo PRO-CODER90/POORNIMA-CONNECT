@@ -5,9 +5,13 @@ export interface Limit {
   max: number;
   windowS: number;
 }
-export const LOGIN_LIMIT: Limit = { max: 5, windowS: 600 }; // 5 failures / 10 min
-export const FORGOT_LIMIT: Limit = { max: 5, windowS: 900 }; // 5 requests / 15 min
-export const MAIL_LIMIT: Limit = { max: 3, windowS: 900 }; // 3 emails / 15 min per account
+export const LOGIN_LIMIT: Limit = { max: 5, windowS: 600 }; // 5 failures / 10 min per account (+IP)
+export const LOGIN_IP_LIMIT: Limit = { max: 20, windowS: 600 }; // 20 failures / 10 min per IP
+export const FORGOT_LIMIT: Limit = { max: 5, windowS: 900 }; // 5 requests / 15 min per IP
+export const MAIL_LIMIT: Limit = { max: 3, windowS: 3600 }; // 3 setup/reset emails / hour per account
+export const MAIL_IP_LIMIT: Limit = { max: 20, windowS: 3600 }; // per IP; higher, many students share a campus NAT
+export const RESET_LIMIT: Limit = { max: 10, windowS: 900 }; // 10 requests / 15 min per IP
+export const VALIDATE_LIMIT: Limit = { max: 20, windowS: 900 }; // 20 requests / 15 min per IP
 
 const URL_ = process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;

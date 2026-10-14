@@ -31,3 +31,27 @@ export function withErrors<A extends unknown[]>(handler: (...args: A) => Promise
     }
   };
 }
+
+/**
+ * CSRF defence in depth on top of SameSite=Lax: a POST that carries an Origin header must come from
+ * this site, and body-carrying routes must be JSON (a cross-site HTML form can't send that).
+ * Returns a ready response when the request should be refused, otherwise null.
+ */
+export function guardPost(req: Request, { json = true }: { json?: boolean } = {}): Response | null {
+  const origin = req.headers.get("origin");
+  if (origin) {
+    const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+    let same = false;
+    try {
+      same = new URL(origin).host === host;
+      if (!same && process.env.APP_URL) same = origin === new URL(process.env.APP_URL).origin;
+    } catch {
+      same = false;
+    }
+    if (!same) return fail("FORBIDDEN");
+  }
+  if (json && !(req.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) {
+    return fail("UNSUPPORTED_MEDIA");
+  }
+  return null;
+}
