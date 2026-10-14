@@ -19,3 +19,15 @@ export async function readJson(req: Request): Promise<Record<string, unknown>> {
   const body = await req.json().catch(() => null);
   return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
 }
+
+/** Wraps a route so an unexpected failure (e.g. database unreachable, missing env var) returns JSON, not an empty 500. */
+export function withErrors<A extends unknown[]>(handler: (...args: A) => Promise<Response>) {
+  return async (...args: A): Promise<Response> => {
+    try {
+      return await handler(...args);
+    } catch (e) {
+      console.error("[api] unhandled error:", e);
+      return fail("SERVER_ERROR");
+    }
+  };
+}

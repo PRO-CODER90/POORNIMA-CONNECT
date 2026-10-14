@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { after } from "next/server";
-import { clientIp, fail, ok, readJson } from "@/lib/api";
+import { clientIp, fail, ok, readJson, withErrors } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { sendEmail } from "@/lib/mail";
 import { checkPasswordPolicy } from "@/lib/password";
@@ -9,7 +9,7 @@ import { findValidToken } from "@/lib/tokens";
 import { findById } from "@/lib/users";
 
 // Used for both "reset" and first-time "setup".
-export async function POST(req: Request) {
+export const POST = withErrors(async (req: Request) => {
   const { token, password, confirmPassword } = await readJson(req);
   if (typeof password !== "string" || typeof confirmPassword !== "string") return fail("MISSING_FIELDS");
 
@@ -48,4 +48,4 @@ export async function POST(req: Request) {
     sendEmail(user.email, "changed", user.name).catch((e) => console.error("password-changed email failed", e)),
   );
   return ok({ message: "Password set successfully. Please sign in." }); // no auto-login
-}
+});

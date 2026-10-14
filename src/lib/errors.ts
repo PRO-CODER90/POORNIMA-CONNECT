@@ -10,6 +10,7 @@ export const ERRORS = {
   GOOGLE_FAILED: { status: 401, message: "We couldn't sign you in with Google. Please try again or use your password." },
   GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
   SESSION_EXPIRED: { status: 401, message: "Your session has expired. Please sign in again." },
+  SERVER_ERROR: { status: 500, message: "Something went wrong on our side. Please try again shortly." },
   NETWORK_ERROR: { status: 500, message: "Network error. Check your connection and try again." },
   LINK_INVALID: { status: 400, message: "This link is invalid or has expired. Please request a new one." },
   PASSWORD_MISMATCH: { status: 400, message: "Passwords don't match." },

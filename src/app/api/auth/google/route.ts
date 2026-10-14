@@ -1,11 +1,11 @@
-import { clientIp, fail, readJson } from "@/lib/api";
+import { clientIp, fail, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { verifyGoogleIdToken } from "@/lib/google";
 import { isLimited, recordHit } from "@/lib/rateLimit";
 import { createToken, TTL } from "@/lib/tokens";
 import { findByEmail } from "@/lib/users";
 
-export async function POST(req: Request) {
+export const POST = withErrors(async (req: Request) => {
   const key = [`ip:${clientIp(req)}`];
   if (await isLimited(key)) return fail("TOO_MANY_ATTEMPTS");
 
@@ -37,4 +37,4 @@ export async function POST(req: Request) {
     return fail("SETUP_REQUIRED", { setupToken, name: user.name });
   }
   return startSession(user);
-}
+});

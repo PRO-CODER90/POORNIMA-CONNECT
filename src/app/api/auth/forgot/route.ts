@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { clientIp, fail, ok, readJson } from "@/lib/api";
+import { clientIp, fail, ok, readJson, withErrors } from "@/lib/api";
 import { appUrl, sendEmail } from "@/lib/mail";
 import { FORGOT_LIMIT, isLimited, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
 import { createToken } from "@/lib/tokens";
@@ -7,7 +7,7 @@ import { findByEmailOrEnrollment } from "@/lib/users";
 
 const NEUTRAL = "If this account exists, a link has been sent to the registered email. It expires in 30 minutes.";
 
-export async function POST(req: Request) {
+export const POST = withErrors(async (req: Request) => {
   const { identifier } = await readJson(req);
   const id = typeof identifier === "string" ? identifier.trim().toLowerCase() : "";
   if (!id || id.length > 200) return fail("MISSING_FIELDS");
@@ -36,4 +36,4 @@ export async function POST(req: Request) {
     }
   });
   return ok({ message: NEUTRAL });
-}
+});

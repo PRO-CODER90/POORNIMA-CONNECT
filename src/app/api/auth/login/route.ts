@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { after } from "next/server";
-import { clientIp, fail, readJson } from "@/lib/api";
+import { clientIp, fail, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { appUrl, sendEmail } from "@/lib/mail";
 import { clearHits, isLimited, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
@@ -11,7 +11,7 @@ import { findByEnrollment, maskEmail } from "@/lib/users";
 const DUMMY_HASH = "$2b$12$fSSl.kpupFF3XQBZ8frM9./ZyIiiMcvX9wP3cBvR9ejtyhU2Y41.q";
 
 // The role is NOT sent by the client: it comes from the matched record.
-export async function POST(req: Request) {
+export const POST = withErrors(async (req: Request) => {
   const body = await readJson(req);
   const enr = String(body.enrollmentNo ?? "").trim();
   const password = typeof body.password === "string" ? body.password : "";
@@ -52,4 +52,4 @@ export async function POST(req: Request) {
   }
   after(() => clearHits(keys));
   return startSession(user);
-}
+});

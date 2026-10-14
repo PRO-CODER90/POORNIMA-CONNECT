@@ -62,7 +62,9 @@ export function SuccessBanner({ children }: { children: ReactNode }) {
 export async function postJson<T = Record<string, unknown>>(url: string, body: unknown): Promise<T & { success?: boolean; code?: string; message?: string }> {
   try {
     const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    return await res.json();
+    const data = await res.json().catch(() => null);
+    if (data) return data;
+    return { success: false, code: "SERVER_ERROR", message: "Something went wrong on our side. Please try again shortly." } as never;
   } catch {
     return { success: false, code: "NETWORK_ERROR", message: "Network error. Check your connection and try again." } as never;
   }
