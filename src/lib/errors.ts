@@ -1,14 +1,15 @@
 // Messages mirror backend/src/Errors.php.
 export const ERRORS = {
-  GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
-  GOOGLE_FAILED: { status: 401, message: "We couldn't sign you in with Google. Please try again." },
-  INVALID_DOMAIN: { status: 403, message: "Please sign in with your Poornima University email (@poornima.edu.in)." },
-  NOT_REGISTERED: { status: 403, message: "This email is not registered in the University Portal. Contact support if you think this is a mistake." },
-  ENROLLMENT_MISMATCH: { status: 403, message: "The enrollment number doesn't match this account. Please check and try again." },
-  INVALID_PASSCODE: { status: 401, message: "Incorrect passcode. Please try again." },
-  TOO_MANY_ATTEMPTS: { status: 429, message: "Too many failed attempts. Please try again after 10 minutes." },
-  SESSION_EXPIRED: { status: 401, message: "Your session has expired. Please sign in again." },
-  NETWORK_ERROR: { status: 0, message: "Network error. Check your connection and try again." },
+  MISSING_FIELDS: { message: "Please enter your enrollment number and passcode." },
+  INVALID_ENROLLMENT_FORMAT: { message: "Enrollment number should contain digits only." },
+  INVALID_CREDENTIALS: { message: "Incorrect enrollment number or passcode. Please try again." },
+  TOO_MANY_ATTEMPTS: { message: "Too many failed attempts. Please try again in 10 minutes." },
+  INVALID_DOMAIN: { message: "Please sign in with your Poornima University email (@poornima.edu.in)." },
+  NOT_REGISTERED: { message: "This email isn't registered in the University Portal. Contact support if this is a mistake." },
+  GOOGLE_FAILED: { message: "We couldn't sign you in with Google. Please try again or use your passcode." },
+  GOOGLE_POPUP_CLOSED: { message: "Sign-in was cancelled. Please try again." },
+  SESSION_EXPIRED: { message: "Your session has expired. Please sign in again." },
+  NETWORK_ERROR: { message: "Network error. Check your connection and try again." },
 } as const;
 
 export type ErrorCode = keyof typeof ERRORS;

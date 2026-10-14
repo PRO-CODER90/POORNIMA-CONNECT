@@ -7,7 +7,36 @@ final class AuthController
 {
     private const DOMAIN = '@poornima.edu.in';
 
-    /** POST /api/auth/google  { idToken } */
+    /** POST /api/auth/login  { role, enrollmentNo, passcode } */
+    public static function login(): never
+    {
+        $body = Http::body();
+        $role = $body['role'] ?? '';
+        $enr = trim((string) ($body['enrollmentNo'] ?? ''));
+        $passcode = is_string($body['passcode'] ?? null) ? $body['passcode'] : '';
+
+        if ($enr === '' || $passcode === '') Errors::fail('MISSING_FIELDS');
+        if (!preg_match('/^\d{1,20}$/', $enr)) Errors::fail('INVALID_ENROLLMENT_FORMAT');
+
+        // Per IP+enrollment (spec) and per enrollment alone, so spoofing X-Forwarded-For
+        // can't be used to brute-force one account.
+        $keys = ['ipenr:' . Http::clientIp() . ':' . $enr, 'enr:' . $enr];
+        if (RateLimit::limited(...$keys)) Errors::fail('TOO_MANY_ATTEMPTS');
+
+        $user = is_string($role) ? Users::findByEnrollment($role, $enr) : null;
+        $hash = $user ? Users::passcodeHash($user['enrollmentNo']) : null;
+        // Always run one bcrypt comparison so timing doesn't reveal which enrollments exist.
+        $ok = password_verify($passcode, $hash ?: Users::DUMMY_HASH) && $user !== null && $hash !== null;
+
+        if (!$ok) {
+            RateLimit::fail(...$keys);
+            Errors::fail('INVALID_CREDENTIALS');
+        }
+        RateLimit::clear(...$keys);
+        self::startSession($user);
+    }
+
+    /** POST /api/auth/google  { idToken } — verified, registered university email logs in directly. */
     public static function google(): never
     {
         $ipKey = 'ip:' . Http::clientIp();
@@ -36,45 +65,7 @@ final class AuthController
             RateLimit::fail($ipKey);
             Errors::fail('NOT_REGISTERED');
         }
-
-        $tempToken = Session::sign(['email' => $user['email'], 'step' => 'google'], 300);
-        Http::json(['success' => true, 'needsVerification' => true, 'tempToken' => $tempToken]);
-    }
-
-    /** POST /api/auth/verify  { tempToken, enrollmentNo, passcode } */
-    public static function verify(): never
-    {
-        $body = Http::body();
-        $temp = Session::verify(is_string($body['tempToken'] ?? null) ? $body['tempToken'] : null);
-        if (!$temp || ($temp['step'] ?? '') !== 'google' || !is_string($temp['email'] ?? null)) {
-            Errors::fail('SESSION_EXPIRED');
-        }
-
-        $keys = ['ip:' . Http::clientIp(), 'email:' . Users::normalize($temp['email'])];
-        if (RateLimit::limited(...$keys)) Errors::fail('TOO_MANY_ATTEMPTS');
-
-        $user = Users::findByEmail($temp['email']);
-        $enrollmentNo = trim((string) ($body['enrollmentNo'] ?? ''));
-        $passcode = is_string($body['passcode'] ?? null) ? $body['passcode'] : '';
-
-        if (!$user || !hash_equals($user['enrollmentNo'], $enrollmentNo)) {
-            RateLimit::fail(...$keys);
-            Errors::fail('ENROLLMENT_MISMATCH');
-        }
-        $hash = Users::passcodeHash($user['enrollmentNo']);
-        if (!$hash || $passcode === '' || !password_verify($passcode, $hash)) {
-            RateLimit::fail(...$keys);
-            Errors::fail('INVALID_PASSCODE');
-        }
-
-        RateLimit::clear(...$keys);
-        Session::setCookie(Session::sign([
-            'enrollmentNo' => $user['enrollmentNo'],
-            'name' => $user['name'],
-            'role' => $user['role'],
-            'email' => $user['email'],
-        ], Session::MAX_AGE));
-        Http::json(['success' => true, 'redirect' => '/dashboard']);
+        self::startSession($user);
     }
 
     /** POST /api/auth/logout */
@@ -90,5 +81,16 @@ final class AuthController
         $s = Session::fromCookie();
         if (!$s) Errors::fail('SESSION_EXPIRED');
         Http::json(['name' => $s['name'], 'role' => $s['role'], 'enrollmentNo' => $s['enrollmentNo']]);
+    }
+
+    private static function startSession(array $user): never
+    {
+        Session::setCookie(Session::sign([
+            'enrollmentNo' => $user['enrollmentNo'],
+            'name' => $user['name'],
+            'role' => $user['role'],
+            'email' => $user['email'],
+        ], Session::MAX_AGE));
+        Http::json(['success' => true, 'redirect' => '/dashboard']);
     }
 }

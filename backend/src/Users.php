@@ -28,6 +28,17 @@ final class Users
         return null;
     }
 
+    public static function findByEnrollment(string $role, string $enrollmentNo): ?array
+    {
+        foreach (self::RECORDS as $u) {
+            if ($u['role'] === $role && $u['enrollmentNo'] === $enrollmentNo) return $u;
+        }
+        return null;
+    }
+
+    /** Valid bcrypt hash used so unknown users cost the same time as known ones. */
+    public const DUMMY_HASH = '$2y$10$0pLO0itaTshYcRpQtawL.OmziAaltOTC2u1NEqnajpLqUCwfnna6i';
+
     public static function passcodeHash(string $enrollmentNo): ?string
     {
         $raw = base64_decode(Config::get('PASSCODE_HASHES', ''), true);

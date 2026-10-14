@@ -11,7 +11,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 $routes = [
     'POST /api/auth/google' => [AuthController::class, 'google'],
-    'POST /api/auth/verify' => [AuthController::class, 'verify'],
+    'POST /api/auth/login' => [AuthController::class, 'login'],
     'POST /api/auth/logout' => [AuthController::class, 'logout'],
     'GET /api/me' => [AuthController::class, 'me'],
 ];

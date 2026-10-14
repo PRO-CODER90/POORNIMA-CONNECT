@@ -7,9 +7,13 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Users;
 
+// --demo: use the fixed, publicly-known test passcodes. NEVER on a real deployment.
+$demo = ['20070' => 'Hj@20070', '18915' => 'Vs@18915', '18221' => 'Ar@18221', '1234' => 'Rk@1234', '1532' => 'Kv@1532'];
+$useDemo = in_array('--demo', $argv, true);
+
 $hashes = [];
 foreach (Users::enrollmentNumbers() as $id) {
-    $pass = (string) random_int(100000, 999999);
+    $pass = $useDemo ? $demo[$id] : (string) random_int(100000, 999999);
     $hashes[$id] = password_hash($pass, PASSWORD_BCRYPT);
     echo "$id: $pass\n";
 }

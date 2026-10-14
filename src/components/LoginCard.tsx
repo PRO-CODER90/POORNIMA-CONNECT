@@ -1,103 +1,54 @@
 "use client";
 
-import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import GoogleButton from "@/components/GoogleButton";
 import { ERRORS, type ErrorCode } from "@/lib/errors";
 
-interface GoogleId {
-  initialize(cfg: {
-    client_id: string;
-    callback: (r: { credential: string }) => void;
-    hd?: string;
-  }): void;
-  renderButton(el: HTMLElement, opts: Record<string, unknown>): void;
-}
-declare global {
-  interface Window {
-    google?: { accounts: { id: GoogleId } };
-  }
-}
-
-type ApiResult = {
-  success: boolean;
-  code?: ErrorCode;
-  message?: string;
-  needsVerification?: boolean;
-  tempToken?: string;
-  redirect?: string;
-};
-
-async function post(url: string, body: unknown): Promise<ApiResult> {
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return await res.json();
-  } catch {
-    return { success: false, code: "NETWORK_ERROR", message: ERRORS.NETWORK_ERROR.message };
-  }
-}
+type Role = "student" | "faculty";
 
 const inputCls =
-  "w-full rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm text-white placeholder-white/60 outline-none focus:border-white/70 focus:ring-2 focus:ring-white/30";
+  "w-full rounded-xl border border-white/25 bg-white/10 py-3 pl-11 text-sm text-white placeholder-white/60 outline-none focus:border-white/70 focus:ring-2 focus:ring-white/30";
+
+const Icon = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/70" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d={d} />
+  </svg>
+);
 
 export default function LoginCard({ initialError }: { initialError?: ErrorCode }) {
-  const [error, setError] = useState<string | null>(initialError ? ERRORS[initialError].message : null);
   const router = useRouter();
-  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [role, setRole] = useState<Role>("student");
   const [enrollmentNo, setEnrollmentNo] = useState("");
   const [passcode, setPasscode] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState<string | null>(initialError ? ERRORS[initialError].message : null);
   const [busy, setBusy] = useState(false);
-  const [gsiReady, setGsiReady] = useState(false);
-  const btnRef = useRef<HTMLDivElement>(null);
 
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-  const shownError =
-    error ?? (clientId ? null : "Google sign-in is not configured (missing NEXT_PUBLIC_GOOGLE_CLIENT_ID).");
-
-  const onCredential = useCallback(async (credential: string) => {
-    setError(null);
-    setBusy(true);
-    const r = await post("/api/auth/google", { idToken: credential });
-    setBusy(false);
-    if (r.success && r.needsVerification && r.tempToken) setTempToken(r.tempToken);
-    else setError(r.message ?? ERRORS.GOOGLE_FAILED.message);
-  }, []);
-
-  useEffect(() => {
-    if (!gsiReady || tempToken || !btnRef.current || !window.google) return;
-    if (!clientId) return;
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      hd: "poornima.edu.in",
-      callback: (r) => onCredential(r.credential),
-    });
-    window.google.accounts.id.renderButton(btnRef.current, {
-      type: "standard",
-      theme: "outline",
-      size: "large",
-      shape: "pill",
-      text: "continue_with",
-      logo_alignment: "left",
-      width: 320,
-    });
-  }, [gsiReady, tempToken, clientId, onCredential]);
-
-  async function verify(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const enr = enrollmentNo.trim();
+    if (!enr || !passcode) return setError(ERRORS.MISSING_FIELDS.message);
+    if (!/^\d+$/.test(enr)) return setError(ERRORS.INVALID_ENROLLMENT_FORMAT.message);
+
     setBusy(true);
-    const r = await post("/api/auth/verify", { tempToken, enrollmentNo, passcode });
-    if (r.success) {
-      router.push(r.redirect ?? "/dashboard");
-      return;
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, enrollmentNo: enr, passcode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        router.push(data.redirect ?? "/dashboard");
+        return; // keep the spinner until navigation
+      }
+      setError(data.message ?? ERRORS.NETWORK_ERROR.message);
+    } catch {
+      setError(ERRORS.NETWORK_ERROR.message);
     }
     setBusy(false);
-    if (r.code === "SESSION_EXPIRED") setTempToken(null);
-    setError(r.message ?? ERRORS.GOOGLE_FAILED.message);
   }
 
   return (
@@ -105,64 +56,101 @@ export default function LoginCard({ initialError }: { initialError?: ErrorCode }
       className="w-full rounded-3xl border border-white/25 bg-white/[0.12] p-6 text-center shadow-2xl backdrop-blur-[18px] sm:p-8 lg:max-w-[400px]"
       aria-labelledby="signin-title"
     >
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={() => setGsiReady(true)} />
-
       <h2 id="signin-title" className="text-2xl font-semibold">Sign In</h2>
-      <p className="mt-1 text-sm text-white/80">
-        {tempToken ? "Verify your identity to continue" : "Welcome to University Portal"}
-      </p>
+      <p className="mt-1 text-sm text-white/80">Welcome to University Portal</p>
 
-      <div className="mt-6">
-        {tempToken ? (
-          <form onSubmit={verify} className="space-y-3 text-left">
-            <label className="sr-only" htmlFor="enrollment">Enrollment No.</label>
-            <input
-              id="enrollment"
-              className={inputCls}
-              placeholder="Enrollment No."
-              inputMode="numeric"
-              autoComplete="off"
-              value={enrollmentNo}
-              onChange={(e) => setEnrollmentNo(e.target.value)}
-              required
-            />
-            <label className="sr-only" htmlFor="passcode">Passcode</label>
-            <input
-              id="passcode"
-              type="password"
-              className={inputCls}
-              placeholder="Passcode"
-              autoComplete="off"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              required
-            />
+      <form onSubmit={submit} className="mt-6 space-y-3 text-left" noValidate>
+        <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 rounded-xl border border-white/25 bg-white/10 p-1 text-sm">
+          {(["student", "faculty"] as const).map((r) => (
             <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded-xl bg-white py-3 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-white/60 disabled:opacity-60"
+              key={r}
+              type="button"
+              role="radio"
+              aria-checked={role === r}
+              onClick={() => setRole(r)}
+              className={`rounded-lg py-2 font-medium capitalize transition ${role === r ? "bg-white text-zinc-900" : "text-white/80 hover:bg-white/10"}`}
             >
-              {busy ? "Verifying…" : "Continue"}
+              {r}
             </button>
-          </form>
-        ) : (
-          <div className="flex min-h-11 justify-center">
-            <div ref={btnRef} aria-busy={busy} className={busy ? "pointer-events-none opacity-60" : ""} />
+          ))}
+        </div>
+
+        <div className="relative">
+          <label htmlFor="enrollment" className="sr-only">Enrollment No.</label>
+          <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+          <input
+            id="enrollment"
+            className={`${inputCls} pr-4`}
+            placeholder="Enrollment No."
+            inputMode="numeric"
+            autoComplete="username"
+            value={enrollmentNo}
+            onChange={(e) => setEnrollmentNo(e.target.value)}
+          />
+        </div>
+
+        <div className="relative">
+          <label htmlFor="passcode" className="sr-only">Passcode</label>
+          <Icon d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4" />
+          <input
+            id="passcode"
+            type={showPass ? "text" : "password"}
+            className={`${inputCls} pr-11`}
+            placeholder="Passcode"
+            autoComplete="current-password"
+            value={passcode}
+            onChange={(e) => setPasscode(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPass((v) => !v)}
+            aria-label={showPass ? "Hide passcode" : "Show passcode"}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-white/70 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/40"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+              {showPass && <path d="M3 3l18 18" />}
+            </svg>
+          </button>
+        </div>
+
+        {error && (
+          <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-300/40 bg-red-500/20 px-3 py-2.5 text-sm text-red-50 backdrop-blur">
+            <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 14h-2v-2h2v2Zm0-4h-2V7h2v5Z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-white/60 disabled:opacity-70"
+        >
+          {busy ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />
+              Signing in…
+            </>
+          ) : (
+            <>Sign In <span aria-hidden="true">→</span></>
+          )}
+        </button>
+      </form>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-white/70" aria-hidden="true">
+        <span className="h-px flex-1 bg-white/25" /> or <span className="h-px flex-1 bg-white/25" />
       </div>
 
-      {shownError && (
-        <div
-          role="alert"
-          className="mt-5 flex items-start gap-2 rounded-xl border border-red-300/40 bg-red-500/20 px-3 py-2.5 text-left text-sm text-red-50 backdrop-blur"
-        >
-          <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
-            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 14h-2v-2h2v2Zm0-4h-2V7h2v5Z" />
-          </svg>
-          <span>{shownError}</span>
-        </div>
-      )}
+      <div className={busy ? "pointer-events-none opacity-60" : ""}>
+        <GoogleButton
+          onBusy={setBusy}
+          onError={setError}
+          onSuccess={(redirect) => router.push(redirect)}
+        />
+      </div>
 
       <p className="mt-6 text-xs text-white/80">
         Need help?{" "}
