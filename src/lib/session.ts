@@ -10,18 +10,13 @@ function secret() {
 }
 
 export async function signJwt(payload: Record<string, unknown>, expiresIn: string) {
-  return new SignJWT(payload)
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(secret());
+  return new SignJWT(payload).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime(expiresIn).sign(secret());
 }
 
 export async function verifyJwt<T = Record<string, unknown>>(token: string | undefined): Promise<T | null> {
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret());
-    return payload as T;
+    return (await jwtVerify(token, secret())).payload as T;
   } catch {
     return null;
   }
@@ -32,4 +27,6 @@ export interface SessionPayload {
   name: string;
   role: "student" | "faculty";
   email: string;
+  uid: number;
+  tv: number; // token_version at login; a password change bumps it and kills older sessions
 }

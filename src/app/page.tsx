@@ -17,8 +17,10 @@ const stats = [
 ];
 
 export default async function Home({ searchParams }: PageProps<"/">) {
-  const { error } = await searchParams;
+  const { error, setup, reset } = await searchParams;
   const code = typeof error === "string" && error in ERRORS ? (error as ErrorCode) : undefined;
+  const valid = (v: unknown): v is string => typeof v === "string" && v.length >= 20 && v.length <= 200;
+  const link = valid(setup) ? { token: setup, mode: "setup" as const } : valid(reset) ? { token: reset, mode: "reset" as const } : undefined;
 
   return (
     <main
@@ -67,7 +69,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             </dl>
           </section>
 
-          <LoginCard initialError={code} />
+          <LoginCard initialError={code} initialLink={link} />
         </div>
       </div>
     </main>

@@ -1,34 +1,48 @@
+import { getDb } from "@/lib/db";
+
 export type Role = "student" | "faculty";
 
-export interface UserRecord {
-  enrollmentNo: string;
+export interface UserRow {
+  id: number;
+  role: Role;
+  enrollment_no: string;
   name: string;
   email: string;
-  role: Role;
+  password_hash: string | null;
+  token_version: number;
 }
 
-// Sample records from the spec. Passcode hashes are NOT stored here; they live
-// in the PASSCODE_HASHES env var as base64 JSON (see scripts/seed-passcodes.mjs).
-export const users: UserRecord[] = [
-  { enrollmentNo: "20070", name: "HJ", email: "2024bcaaidshj20070@poornima.edu.in", role: "student" },
-  { enrollmentNo: "18915", name: "VS", email: "2024bcaaidsvs18915@poornima.edu.in", role: "student" },
-  { enrollmentNo: "18221", name: "Aryan", email: "2024bcaaidshj18221@poornima.edu.in", role: "student" },
-  { enrollmentNo: "1234", name: "Rockey", email: "Rockey.Kumar@poornima.edu.in", role: "faculty" },
-  { enrollmentNo: "1532", name: "Kavita", email: "Kavita.Jain@poornima.edu.in", role: "faculty" },
-];
 
-export const normalizeEmail = (e: string) => e.trim().toLowerCase();
-
-export function findUserByEmail(email: string) {
-  const n = normalizeEmail(email);
-  return users.find((u) => normalizeEmail(u.email) === n);
+export async function findByEnrollment(enrollmentNo: string): Promise<UserRow | null> {
+  const rows = await getDb()<UserRow[]>`
+    SELECT id, role, enrollment_no, name, email, password_hash, token_version
+      FROM users WHERE enrollment_no = ${enrollmentNo.trim()}`;
+  return rows[0] ?? null;
 }
 
-export function getPasscodeHash(enrollmentNo: string): string | undefined {
-  try {
-    const map = JSON.parse(Buffer.from(process.env.PASSCODE_HASHES ?? "", "base64").toString() || "{}");
-    return map[enrollmentNo];
-  } catch {
-    return undefined;
-  }
+export async function findByEmail(email: string): Promise<UserRow | null> {
+  const rows = await getDb()<UserRow[]>`
+    SELECT id, role, enrollment_no, name, email, password_hash, token_version
+      FROM users WHERE email = ${email.trim().toLowerCase()}`;
+  return rows[0] ?? null;
 }
+
+/** Forgot-password lookup: the identifier is an email (contains "@") or an enrollment number. */
+export async function findByEmailOrEnrollment(identifier: string): Promise<UserRow | null> {
+  const id = identifier.trim().toLowerCase();
+  return id.includes("@") ? findByEmail(id) : findByEnrollment(id);
+}
+
+export async function findById(id: number): Promise<UserRow | null> {
+  const rows = await getDb()<UserRow[]>`
+    SELECT id, role, enrollment_no, name, email, password_hash, token_version
+      FROM users WHERE id = ${id}`;
+  return rows[0] ?? null;
+}
+
+/** 20••••••@poornima.edu.in */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  return `${local.slice(0, 2)}${"•".repeat(6)}@${domain}`; // fixed length: don't reveal the address length
+}
+

@@ -1,18 +1,26 @@
+// Messages shown to the user. Codes match the API responses (src/lib/api.ts).
 export const ERRORS = {
-  GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
-  GOOGLE_FAILED: { status: 401, message: "We couldn't sign you in with Google. Please try again." },
+  MISSING_FIELDS: { status: 400, message: "Please fill in all required fields." },
+  INVALID_ENROLLMENT_FORMAT: { status: 400, message: "Enrollment number should contain digits only." },
+  INVALID_CREDENTIALS: { status: 401, message: "Incorrect enrollment number or password. Please try again." },
+  TOO_MANY_ATTEMPTS: { status: 429, message: "Too many failed attempts. Please try again in 10 minutes." },
+  TOO_MANY_REQUESTS: { status: 429, message: "Too many requests. Please try again in 15 minutes." },
   INVALID_DOMAIN: { status: 403, message: "Please sign in with your Poornima University email (@poornima.edu.in)." },
-  NOT_REGISTERED: { status: 403, message: "This email is not registered in the University Portal. Contact support if you think this is a mistake." },
-  ENROLLMENT_MISMATCH: { status: 403, message: "The enrollment number doesn't match this account. Please check and try again." },
-  INVALID_PASSCODE: { status: 401, message: "Incorrect passcode. Please try again." },
-  TOO_MANY_ATTEMPTS: { status: 429, message: "Too many failed attempts. Please try again after 10 minutes." },
+  NOT_REGISTERED: { status: 403, message: "This email isn't registered in the University Portal. Contact support if this is a mistake." },
+  GOOGLE_FAILED: { status: 401, message: "We couldn't sign you in with Google. Please try again or use your password." },
+  GOOGLE_POPUP_CLOSED: { status: 400, message: "Sign-in was cancelled. Please try again." },
   SESSION_EXPIRED: { status: 401, message: "Your session has expired. Please sign in again." },
-  NETWORK_ERROR: { status: 0, message: "Network error. Check your connection and try again." },
+  SERVER_ERROR: { status: 500, message: "Something went wrong on our side. Please try again shortly." },
+  NETWORK_ERROR: { status: 500, message: "Network error. Check your connection and try again." },
+  LINK_INVALID: { status: 400, message: "This link is invalid or has expired. Please request a new one." },
+  PASSWORD_MISMATCH: { status: 400, message: "Passwords don't match." },
+  PASSWORD_TOO_SHORT: { status: 400, message: "Password must be at least 8 characters." },
+  PASSWORD_TOO_LONG: { status: 400, message: "Password must be 64 characters or fewer." },
+  PASSWORD_WEAK: { status: 400, message: "Choose a stronger password with letters and numbers, and avoid personal details or common words." },
+  PASSWORD_REUSED: { status: 400, message: "Please choose a password different from your current one." },
+  EMAIL_SEND_FAILED: { status: 502, message: "We couldn't send the email right now. Please try again shortly." },
+  SETUP_REQUIRED: { status: 403, message: "Set your password to activate your account." },
+  SETUP_REQUIRED_EMAIL: { status: 403, message: "Welcome! We've sent a secure link to your registered email to set your password." },
 } as const;
 
 export type ErrorCode = keyof typeof ERRORS;
-
-export function fail(code: ErrorCode) {
-  const { status, message } = ERRORS[code];
-  return Response.json({ success: false, code, message }, { status: status || 500 });
-}

@@ -1,38 +1,40 @@
-import { OAuth2Client } from "google-auth-library";
-import { fail } from "@/lib/errors";
-import { findUserByEmail } from "@/lib/users";
-import { signJwt } from "@/lib/session";
-import { clientIp, isLimited, recordFailure } from "@/lib/rateLimit";
+import { clientIp, fail, readJson, withErrors } from "@/lib/api";
+import { startSession } from "@/lib/auth";
+import { verifyGoogleIdToken } from "@/lib/google";
+import { isLimited, recordHit } from "@/lib/rateLimit";
+import { createToken, TTL } from "@/lib/tokens";
+import { findByEmail } from "@/lib/users";
 
-const DOMAIN = "@poornima.edu.in";
+export const POST = withErrors(async (req: Request) => {
+  const key = [`ip:${clientIp(req)}`];
+  if (await isLimited(key)) return fail("TOO_MANY_ATTEMPTS");
 
-export async function POST(req: Request) {
-  const ipKey = `ip:${clientIp(req)}`;
-  if (isLimited(ipKey)) return fail("TOO_MANY_ATTEMPTS");
-
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  let email: string;
   try {
-    const { idToken } = await req.json();
-    if (!clientId || typeof idToken !== "string") throw new Error("bad request");
-
-    const ticket = await new OAuth2Client(clientId).verifyIdToken({ idToken, audience: clientId });
-    const payload = ticket.getPayload();
-    const email = payload?.email;
-    if (!email || payload?.email_verified !== true) throw new Error("unverified");
-
-    if (!email.trim().toLowerCase().endsWith(DOMAIN)) {
-      recordFailure(ipKey);
-      return fail("INVALID_DOMAIN");
-    }
-    const user = findUserByEmail(email);
-    if (!user) {
-      recordFailure(ipKey);
-      return fail("NOT_REGISTERED");
-    }
-    const tempToken = await signJwt({ email: user.email, step: "google" }, "5m");
-    return Response.json({ success: true, needsVerification: true, tempToken });
+    const { idToken } = await readJson(req);
+    if (typeof idToken !== "string" || !idToken) throw new Error("missing token");
+    const p = await verifyGoogleIdToken(idToken);
+    if (!p.email || p.email_verified !== true) throw new Error("unverified email");
+    email = p.email.trim().toLowerCase();
   } catch {
-    recordFailure(ipKey);
+    await recordHit(key);
     return fail("GOOGLE_FAILED");
   }
-}
+
+  if (!email.endsWith("@poornima.edu.in")) {
+    await recordHit(key);
+    return fail("INVALID_DOMAIN");
+  }
+  const user = await findByEmail(email);
+  if (!user) {
+    await recordHit(key);
+    return fail("NOT_REGISTERED");
+  }
+
+  if (!user.password_hash) {
+    // Google already proved the user owns this email, so no email step: hand back a short-lived setup token.
+    const setupToken = await createToken(user.id, "setup", TTL.setupGoogle);
+    return fail("SETUP_REQUIRED", { setupToken, name: user.name });
+  }
+  return startSession(user);
+});
