@@ -10,5 +10,5 @@ export async function proxy(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-// /api/* is rewritten to the PHP backend, which checks the session itself.
+// API routes check the session themselves; only /dashboard is gated here.
 export const config = { matcher: ["/dashboard/:path*"] };

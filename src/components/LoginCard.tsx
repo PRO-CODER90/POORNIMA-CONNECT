@@ -5,8 +5,6 @@ import { useState } from "react";
 import GoogleButton from "@/components/GoogleButton";
 import { ERRORS, type ErrorCode } from "@/lib/errors";
 
-type Role = "student" | "faculty";
-
 const inputCls =
   "w-full rounded-xl border border-white/25 bg-white/10 py-3 pl-11 text-sm text-white placeholder-white/60 outline-none focus:border-white/70 focus:ring-2 focus:ring-white/30";
 
@@ -18,7 +16,6 @@ const Icon = ({ d }: { d: string }) => (
 
 export default function LoginCard({ initialError }: { initialError?: ErrorCode }) {
   const router = useRouter();
-  const [role, setRole] = useState<Role>("student");
   const [enrollmentNo, setEnrollmentNo] = useState("");
   const [passcode, setPasscode] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -37,7 +34,7 @@ export default function LoginCard({ initialError }: { initialError?: ErrorCode }
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, enrollmentNo: enr, passcode }),
+        body: JSON.stringify({ enrollmentNo: enr, passcode }),
       });
       const data = await res.json();
       if (data.success) {
@@ -60,21 +57,6 @@ export default function LoginCard({ initialError }: { initialError?: ErrorCode }
       <p className="mt-1 text-sm text-white/80">Welcome to University Portal</p>
 
       <form onSubmit={submit} className="mt-6 space-y-3 text-left" noValidate>
-        <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 rounded-xl border border-white/25 bg-white/10 p-1 text-sm">
-          {(["student", "faculty"] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={role === r}
-              onClick={() => setRole(r)}
-              className={`rounded-lg py-2 font-medium capitalize transition ${role === r ? "bg-white text-zinc-900" : "text-white/80 hover:bg-white/10"}`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-
         <div className="relative">
           <label htmlFor="enrollment" className="sr-only">Enrollment No.</label>
           <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />

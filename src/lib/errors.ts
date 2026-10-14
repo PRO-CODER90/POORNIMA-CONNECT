@@ -1,4 +1,4 @@
-// Messages mirror backend/src/Errors.php.
+// Messages shown to the user. Codes match the API responses (src/lib/api.ts).
 export const ERRORS = {
   MISSING_FIELDS: { message: "Please enter your enrollment number and passcode." },
   INVALID_ENROLLMENT_FORMAT: { message: "Enrollment number should contain digits only." },
