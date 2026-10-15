@@ -1,26 +1,26 @@
 import bcrypt from "bcryptjs";
 import { after } from "next/server";
-import { clientIp, fail, ok, readJson, withErrors } from "@/lib/api";
+import { clientIp, fail, guardPost, ok, readJson, withErrors } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { sendEmail } from "@/lib/mail";
 import { checkPasswordPolicy } from "@/lib/password";
-import { FORGOT_LIMIT, isLimited, recordHit } from "@/lib/rateLimit";
+import { isLimited, recordHit, RESET_LIMIT } from "@/lib/rateLimit";
 import { findValidToken } from "@/lib/tokens";
 import { findById } from "@/lib/users";
 
 // Used for both "reset" and first-time "setup".
 export const POST = withErrors(async (req: Request) => {
+  const refused = guardPost(req);
+  if (refused) return refused;
   const { token, password, confirmPassword } = await readJson(req);
   if (typeof password !== "string" || typeof confirmPassword !== "string") return fail("MISSING_FIELDS");
 
   const ipKey = [`reset:${clientIp(req)}`];
-  if (await isLimited(ipKey, FORGOT_LIMIT)) return fail("TOO_MANY_REQUESTS");
+  if (await isLimited(ipKey, RESET_LIMIT)) return fail("TOO_MANY_REQUESTS");
+  await recordHit(ipKey, RESET_LIMIT);
 
   const t = await findValidToken(token);
-  if (!t) {
-    await recordHit(ipKey, FORGOT_LIMIT); // only bad links count, so typos in the password never lock anyone out
-    return fail("LINK_INVALID");
-  }
+  if (!t) return fail("LINK_INVALID");
   if (password !== confirmPassword) return fail("PASSWORD_MISMATCH");
 
   const user = await findById(t.user_id);

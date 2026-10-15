@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const inputCls =
-  "w-full rounded-xl border border-white/25 bg-white/10 py-3 pl-11 text-sm text-white placeholder-white/60 outline-none focus:border-white/70 focus:ring-2 focus:ring-white/30";
+  "w-full rounded-xl border border-white/25 bg-white/10 py-3 pl-11 text-sm text-white placeholder-white/80 outline-none focus:border-white/70 focus:ring-2 focus:ring-white/30";
 
 export const primaryBtn =
   "flex w-full items-center justify-center gap-2 rounded-xl bg-blue-500 py-3 text-sm font-semibold text-white transition hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-white/60 disabled:cursor-not-allowed disabled:opacity-60";
@@ -37,9 +37,9 @@ export function EyeToggle({ shown, onToggle, label }: { shown: boolean; onToggle
   );
 }
 
-export function ErrorBanner({ children }: { children: ReactNode }) {
+export function ErrorBanner({ children, id }: { children: ReactNode; id?: string }) {
   return (
-    <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-300/40 bg-red-500/20 px-3 py-2.5 text-left text-sm text-red-50 backdrop-blur">
+    <div id={id} role="alert" className="flex items-start gap-2 rounded-xl border border-red-300/40 bg-red-500/20 px-3 py-2.5 text-left text-sm text-red-50 backdrop-blur">
       <svg viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
         <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 14h-2v-2h2v2Zm0-4h-2V7h2v5Z" />
       </svg>
