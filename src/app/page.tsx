@@ -27,7 +27,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       className="relative min-h-screen w-full overflow-hidden text-white bg-cover bg-center"
       style={{
         backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.6)), url(/campus.png)",
+          "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.6)), url(/campus.jpg)",
       }}
     >
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-10 sm:py-8">
