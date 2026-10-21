@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import { after } from "next/server";
 import { clientIp, fail, guardPost, ok, readJson, withErrors } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { sendEmail } from "@/lib/mail";
@@ -46,8 +45,10 @@ export const POST = withErrors(async (req: Request) => {
   });
   if (!done) return fail("LINK_INVALID");
 
-  after(() =>
-    sendEmail(user.email, "changed", { name: user.name }).catch((e) => console.error("password-changed email failed", e)),
-  );
+  try {
+    await sendEmail(user.email, "changed", { name: user.name });
+  } catch (e) {
+    console.error("password-changed email failed", e); // the password is already saved; don't fail the request
+  }
   return ok({ message: "Password set successfully. Please sign in." }); // no auto-login
 });
