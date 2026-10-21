@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Modal from "@/components/Modal";
-import { ErrorBanner, EyeToggle, ICON_LOCK, Icon, inputCls, postJson, primaryBtn, Spinner } from "@/components/ui";
+import { BackLink, ErrorBanner, EyeToggle, ICON_LOCK, Icon, inputCls, postJson, primaryBtn, Spinner } from "@/components/ui";
 import { RULES, strength } from "@/lib/passwordRules";
 
 export type SetMode = "setup" | "reset";
@@ -11,7 +10,7 @@ interface Props {
   token: string;
   mode: SetMode;
   name?: string; // known up front for the Google route; otherwise fetched when the token is validated
-  onClose: () => void;
+  onBack: () => void;
   onDone: () => void;
   onRequestNewLink: () => void;
 }
@@ -19,7 +18,8 @@ interface Props {
 const LABELS = ["", "Weak", "Fair", "Good", "Strong"];
 const COLORS = ["bg-white/20", "bg-red-400", "bg-amber-400", "bg-lime-400", "bg-emerald-400"];
 
-export default function SetPasswordModal({ token, mode, name: initialName, onClose, onDone, onRequestNewLink }: Props) {
+/** "Set your password" screen shown inside the login card (setup link, Google first sign-in, or temporary password). */
+export default function SetPassword({ token, mode, name: initialName, onBack, onDone, onRequestNewLink }: Props) {
   const [state, setState] = useState<"checking" | "ready" | "invalid">("checking");
   const [name, setName] = useState(initialName);
   const [password, setPassword] = useState("");
@@ -29,7 +29,7 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Check the link as soon as the pop-up opens, so an expired link is reported immediately.
+  // Check the link as soon as the screen opens, so an expired link is reported immediately.
   useEffect(() => {
     let alive = true;
     postJson<{ valid?: boolean; name?: string }>("/api/auth/validate-token", { token }).then((r) => {
@@ -68,8 +68,8 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
   const title = mode === "setup" ? "Set your password" : "Set a new password";
 
   return (
-    <Modal titleId="sp-title" onClose={onClose}>
-      <h2 id="sp-title" className="pr-8 text-2xl font-semibold">{title}</h2>
+    <div className="text-left">
+      <h2 id="card-title" className="text-center text-2xl font-semibold">{title}</h2>
 
       {state === "checking" && (
         <div className="mt-6 flex items-center gap-3 text-sm text-white/80" role="status">
@@ -81,15 +81,15 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
         <div className="mt-5 space-y-4">
           <ErrorBanner>{error ?? "This link is invalid or has expired. Please request a new one."}</ErrorBanner>
           {mode === "reset" ? (
-            <button type="button" onClick={onRequestNewLink} data-autofocus className={primaryBtn}>
+            <button type="button" onClick={onRequestNewLink} autoFocus className={primaryBtn}>
               Request new login details
             </button>
           ) : (
             <>
               <p className="text-sm text-white/80">
-                To get a new setup link, close this and sign in with your enrollment number.
+                To get a new setup link, go back and sign in with your enrollment number.
               </p>
-              <button type="button" onClick={onClose} data-autofocus className={primaryBtn}>
+              <button type="button" onClick={onBack} autoFocus className={primaryBtn}>
                 Back to sign in
               </button>
             </>
@@ -172,8 +172,11 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
           <button type="submit" disabled={!canSubmit} className={primaryBtn}>
             {busy ? (<><Spinner /> Saving…</>) : "Set Password"}
           </button>
+          <div className="pt-1 text-center">
+            <BackLink onClick={onBack} />
+          </div>
         </form>
       )}
-    </Modal>
+    </div>
   );
 }

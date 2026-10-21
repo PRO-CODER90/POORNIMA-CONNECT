@@ -1,7 +1,7 @@
 # University Portal
 
 Next.js (App Router) + Postgres. Login with Enrollment No. + password or Google; first-time password
-setup and forgot-password via one-time email links.
+setup via a one-time email link, and forgot-password via an emailed login ID + temporary password. All steps happen inside the login card (no pop-ups).
 
 ## Setup
 
