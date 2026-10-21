@@ -1,11 +1,12 @@
 import { after } from "next/server";
 import { clientIp, fail, guardPost, ok, readJson, withErrors } from "@/lib/api";
-import { appUrl, sendEmail } from "@/lib/mail";
+import { sendEmail } from "@/lib/mail";
 import { FORGOT_LIMIT, isLimited, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
-import { createToken } from "@/lib/tokens";
+import { createTempPassword } from "@/lib/tokens";
 import { findByEmailOrEnrollment } from "@/lib/users";
 
-const NEUTRAL = "If this account exists, a link has been sent to the registered email. It expires in 30 minutes.";
+const NEUTRAL =
+  "If this account exists, your login ID and a temporary password have been sent to the registered email. The temporary password expires in 30 minutes.";
 
 export const POST = withErrors(async (req: Request) => {
   const refused = guardPost(req);
@@ -21,18 +22,19 @@ export const POST = withErrors(async (req: Request) => {
   // Lookup, token and email run after the response is sent, so response time is identical whether or
   // not the account exists. The reply never says which, and email failures are logged, not shown
   // (showing them would reveal that the account exists).
-  const base = appUrl();
   after(async () => {
     try {
       const user = await findByEmailOrEnrollment(id);
-      // Reset links go only to accounts that already have a password. New users activate through
-      // sign-in (enrollment route or Google), which proves they own the email.
+      // Only accounts that already have a password. New users activate through sign-in
+      // (enrollment route or Google), which proves they own the email.
       if (!user || !user.password_hash) return;
       const mailKey = [`forgotmail:${user.id}`];
       if (await isLimited(mailKey, MAIL_LIMIT)) return;
       await recordHit(mailKey, MAIL_LIMIT);
-      const raw = await createToken(user.id, "reset");
-      await sendEmail(user.email, "reset", user.name, `${base}/?reset=${raw}`);
+      // Login ID + a one-time temporary password, sent only to the email on record. The current
+      // password keeps working, so a stranger requesting this can't lock the owner out.
+      const temp = await createTempPassword(user.id);
+      await sendEmail(user.email, "temp", { name: user.name, loginId: user.enrollment_no, tempPassword: temp });
     } catch (e) {
       console.error("forgot-password email failed", e);
     }

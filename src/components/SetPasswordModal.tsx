@@ -82,7 +82,7 @@ export default function SetPasswordModal({ token, mode, name: initialName, onClo
           <ErrorBanner>{error ?? "This link is invalid or has expired. Please request a new one."}</ErrorBanner>
           {mode === "reset" ? (
             <button type="button" onClick={onRequestNewLink} data-autofocus className={primaryBtn}>
-              Send new link
+              Request new login details
             </button>
           ) : (
             <>

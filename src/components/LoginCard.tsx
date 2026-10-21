@@ -48,13 +48,17 @@ export default function LoginCard({ initialError, initialLink }: Props) {
     if (!/^\d+$/.test(enr)) return setError(ERRORS.INVALID_ENROLLMENT_FORMAT.message);
 
     setBusy(true);
-    const r = await postJson<{ redirect?: string }>("/api/auth/login", { enrollmentNo: enr, password });
+    const r = await postJson<{ redirect?: string; changeToken?: string; name?: string }>("/api/auth/login", { enrollmentNo: enr, password });
     if (r.success) {
       router.push(r.redirect ?? "/dashboard");
       return; // keep the spinner until navigation
     }
     setBusy(false);
-    if (r.code === "SETUP_REQUIRED_EMAIL") setModal({ k: "emailSent", message: r.message ?? ERRORS.SETUP_REQUIRED_EMAIL.message });
+    if (r.code === "PASSWORD_CHANGE_REQUIRED" && r.changeToken) {
+      // Signed in with the emailed temporary password: choose a new one now.
+      setPassword("");
+      setModal({ k: "set", token: r.changeToken, mode: "reset", name: r.name });
+    } else if (r.code === "SETUP_REQUIRED_EMAIL") setModal({ k: "emailSent", message: r.message ?? ERRORS.SETUP_REQUIRED_EMAIL.message });
     else setError(r.message ?? ERRORS.NETWORK_ERROR.message);
   }
 

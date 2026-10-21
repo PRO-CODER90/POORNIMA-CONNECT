@@ -22,6 +22,7 @@ export const ERRORS = {
   PASSWORD_REUSED: { status: 400, message: "Please choose a password different from your current one." },
   EMAIL_SEND_FAILED: { status: 502, message: "We couldn't send the email right now. Please try again shortly." },
   SETUP_REQUIRED: { status: 403, message: "Set your password to activate your account." },
+  PASSWORD_CHANGE_REQUIRED: { status: 403, message: "You signed in with a temporary password. Please choose a new password." },
   SETUP_REQUIRED_EMAIL: { status: 403, message: "Welcome! We've sent a secure link to your registered email to set your password." },
 } as const;
 
