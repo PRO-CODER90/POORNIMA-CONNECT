@@ -47,7 +47,7 @@ export const POST = withErrors(async (req: Request) => {
   if (!done) return fail("LINK_INVALID");
 
   after(() =>
-    sendEmail(user.email, "changed", user.name).catch((e) => console.error("password-changed email failed", e)),
+    sendEmail(user.email, "changed", { name: user.name }).catch((e) => console.error("password-changed email failed", e)),
   );
   return ok({ message: "Password set successfully. Please sign in." }); // no auto-login
 });

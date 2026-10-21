@@ -2,14 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import ForgotPasswordModal from "@/components/ForgotPasswordModal";
+import ForgotPassword from "@/components/ForgotPassword";
 import GoogleButton from "@/components/GoogleButton";
-import Modal from "@/components/Modal";
-import SetPasswordModal, { type SetMode } from "@/components/SetPasswordModal";
+import SetPassword, { type SetMode } from "@/components/SetPassword";
 import { ErrorBanner, EyeToggle, ICON_LOCK, ICON_USER, Icon, inputCls, postJson, primaryBtn, Spinner, SuccessBanner } from "@/components/ui";
 import { ERRORS, type ErrorCode } from "@/lib/errors";
 
-type ModalState =
+// Everything happens inside the card: it switches between these screens (no pop-ups).
+type View =
+  | { k: "signin" }
   | { k: "forgot" }
   | { k: "emailSent"; message: string }
   | { k: "set"; token: string; mode: SetMode; name?: string };
@@ -30,14 +31,16 @@ export default function LoginCard({ initialError, initialLink }: Props) {
   const [error, setError] = useState<string | null>(initialError ? ERRORS[initialError].message : null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [modal, setModal] = useState<ModalState | null>(
-    initialLink ? { k: "set", token: initialLink.token, mode: initialLink.mode } : null,
+  const [view, setView] = useState<View>(
+    initialLink ? { k: "set", token: initialLink.token, mode: initialLink.mode } : { k: "signin" },
   );
 
   // Don't leave the one-time token in the address bar / history.
   useEffect(() => {
     if (initialLink) window.history.replaceState(null, "", "/");
   }, [initialLink]);
+
+  const backToSignIn = () => setView({ k: "signin" });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,94 +51,135 @@ export default function LoginCard({ initialError, initialLink }: Props) {
     if (!/^\d+$/.test(enr)) return setError(ERRORS.INVALID_ENROLLMENT_FORMAT.message);
 
     setBusy(true);
-    const r = await postJson<{ redirect?: string }>("/api/auth/login", { enrollmentNo: enr, password });
+    const r = await postJson<{ redirect?: string; changeToken?: string; name?: string }>("/api/auth/login", { enrollmentNo: enr, password });
     if (r.success) {
       router.push(r.redirect ?? "/dashboard");
       return; // keep the spinner until navigation
     }
     setBusy(false);
-    if (r.code === "SETUP_REQUIRED_EMAIL") setModal({ k: "emailSent", message: r.message ?? ERRORS.SETUP_REQUIRED_EMAIL.message });
-    else setError(r.message ?? ERRORS.NETWORK_ERROR.message);
+    if (r.code === "PASSWORD_CHANGE_REQUIRED" && r.changeToken) {
+      // Signed in with the emailed temporary password: choose a new one now.
+      setPassword("");
+      setView({ k: "set", token: r.changeToken, mode: "reset", name: r.name });
+    } else if (r.code === "SETUP_REQUIRED_EMAIL") {
+      setView({ k: "emailSent", message: r.message ?? ERRORS.SETUP_REQUIRED_EMAIL.message });
+    } else setError(r.message ?? ERRORS.NETWORK_ERROR.message);
   }
 
   return (
     <section
       className="w-full rounded-3xl border border-white/25 bg-white/[0.12] p-6 text-center shadow-2xl backdrop-blur-[18px] sm:p-8 lg:max-w-[400px]"
-      aria-labelledby="signin-title"
+      aria-labelledby="card-title"
     >
-      <h2 id="signin-title" className="text-2xl font-semibold">Sign In</h2>
-      <p className="mt-1 text-sm text-white/80">Welcome to University Portal</p>
+      {view.k === "forgot" && <ForgotPassword onBack={backToSignIn} />}
 
-      <form onSubmit={submit} className="mt-6 space-y-3 text-left" noValidate>
-        {notice && <SuccessBanner>{notice}</SuccessBanner>}
-
-        <div className="relative">
-          <label htmlFor="enrollment" className="sr-only">Enrollment No.</label>
-          <Icon d={ICON_USER} />
-          <input
-            id="enrollment"
-            name="username"
-            type="text"
-            className={`${inputCls} pr-4`}
-            placeholder="Enrollment No."
-            inputMode="numeric"
-            autoComplete="username"
-            maxLength={12}
-            aria-describedby={error ? "login-error" : undefined}
-            value={enrollmentNo}
-            onChange={(e) => setEnrollmentNo(e.target.value)}
-          />
-        </div>
-
-        <div className="relative">
-          <label htmlFor="password" className="sr-only">Password</label>
-          <Icon d={ICON_LOCK} />
-          <input
-            id="password"
-            name="password"
-            type={showPass ? "text" : "password"}
-            className={`${inputCls} pr-11`}
-            placeholder="Password"
-            autoComplete="current-password"
-            maxLength={64}
-            aria-describedby={error ? "login-error" : undefined}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <EyeToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} label="password" />
-        </div>
-
-        <div className="text-right">
-          <button
-            type="button"
-            onClick={() => setModal({ k: "forgot" })}
-            className="text-xs text-sky-300 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-white/40"
-          >
-            Forgot password?
+      {view.k === "emailSent" && (
+        <div className="space-y-4 text-left">
+          <h2 id="card-title" className="text-center text-2xl font-semibold">Check your email</h2>
+          <SuccessBanner>{view.message}</SuccessBanner>
+          <p className="text-xs text-white/70">The link expires in 60 minutes and can be used once.</p>
+          <button type="button" autoFocus onClick={backToSignIn} className={primaryBtn}>
+            Back to sign in
           </button>
-        </div>
-
-        {error && <ErrorBanner id="login-error">{error}</ErrorBanner>}
-
-        <button type="submit" disabled={busy} className={primaryBtn}>
-          {busy ? (<><Spinner /> Signing in…</>) : (<>Sign In <span aria-hidden="true">→</span></>)}
-        </button>
-      </form>
-
-      {googleEnabled && (
-        <div className="my-5 flex items-center gap-3 text-xs text-white/70" aria-hidden="true">
-          <span className="h-px flex-1 bg-white/25" /> or <span className="h-px flex-1 bg-white/25" />
         </div>
       )}
 
-      <div className={`${googleEnabled ? "" : "mt-4"} ${busy ? "pointer-events-none opacity-60" : ""}`}>
-        <GoogleButton
-          onBusy={setBusy}
-          onError={setError}
-          onSuccess={(redirect) => router.push(redirect)}
-          onSetupRequired={(token, name) => setModal({ k: "set", token, mode: "setup", name })}
+      {view.k === "set" && (
+        <SetPassword
+          token={view.token}
+          mode={view.mode}
+          name={view.name}
+          onBack={backToSignIn}
+          onRequestNewLink={() => setView({ k: "forgot" })}
+          onDone={() => {
+            setView({ k: "signin" });
+            setError(null);
+            setNotice("Password set successfully. Please sign in.");
+          }}
         />
-      </div>
+      )}
+
+      {view.k === "signin" && (
+        <>
+          <h2 id="card-title" className="text-2xl font-semibold">Sign In</h2>
+          <p className="mt-1 text-sm text-white/80">Welcome to University Portal</p>
+
+          <form onSubmit={submit} className="mt-6 space-y-3 text-left" noValidate>
+            {notice && <SuccessBanner>{notice}</SuccessBanner>}
+
+            <div className="relative">
+              <label htmlFor="enrollment" className="sr-only">Enrollment No.</label>
+              <Icon d={ICON_USER} />
+              <input
+                id="enrollment"
+                name="username"
+                type="text"
+                className={`${inputCls} pr-4`}
+                placeholder="Enrollment No."
+                inputMode="numeric"
+                autoComplete="username"
+                maxLength={12}
+                aria-describedby={error ? "login-error" : undefined}
+                value={enrollmentNo}
+                onChange={(e) => setEnrollmentNo(e.target.value)}
+              />
+            </div>
+
+            <div className="relative">
+              <label htmlFor="password" className="sr-only">Password</label>
+              <Icon d={ICON_LOCK} />
+              <input
+                id="password"
+                name="password"
+                type={showPass ? "text" : "password"}
+                className={`${inputCls} pr-11`}
+                placeholder="Password"
+                autoComplete="current-password"
+                maxLength={64}
+                aria-describedby={error ? "login-error" : undefined}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <EyeToggle shown={showPass} onToggle={() => setShowPass((v) => !v)} label="password" />
+            </div>
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setNotice(null);
+                  setView({ k: "forgot" });
+                }}
+                className="text-xs text-sky-300 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-white/40"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {error && <ErrorBanner id="login-error">{error}</ErrorBanner>}
+
+            <button type="submit" disabled={busy} className={primaryBtn}>
+              {busy ? (<><Spinner /> Signing in…</>) : (<>Sign In <span aria-hidden="true">→</span></>)}
+            </button>
+          </form>
+
+          {googleEnabled && (
+            <div className="my-5 flex items-center gap-3 text-xs text-white/70" aria-hidden="true">
+              <span className="h-px flex-1 bg-white/25" /> or <span className="h-px flex-1 bg-white/25" />
+            </div>
+          )}
+
+          <div className={`${googleEnabled ? "" : "mt-4"} ${busy ? "pointer-events-none opacity-60" : ""}`}>
+            <GoogleButton
+              onBusy={setBusy}
+              onError={setError}
+              onSuccess={(redirect) => router.push(redirect)}
+              onSetupRequired={(token, name) => setView({ k: "set", token, mode: "setup", name })}
+            />
+          </div>
+        </>
+      )}
 
       <p className="mt-6 text-xs text-white/80">
         Need help?{" "}
@@ -143,34 +187,6 @@ export default function LoginCard({ initialError, initialLink }: Props) {
           Contact support
         </a>
       </p>
-
-      {modal?.k === "forgot" && <ForgotPasswordModal onClose={() => setModal(null)} />}
-
-      {modal?.k === "emailSent" && (
-        <Modal titleId="es-title" onClose={() => setModal(null)}>
-          <h2 id="es-title" className="pr-8 text-2xl font-semibold">Check your email</h2>
-          <p className="mt-3 text-sm text-white/85">{modal.message}</p>
-          <p className="mt-2 text-xs text-white/65">The link expires in 60 minutes and can be used once.</p>
-          <button type="button" data-autofocus onClick={() => setModal(null)} className={`${primaryBtn} mt-5`}>
-            Back to sign in
-          </button>
-        </Modal>
-      )}
-
-      {modal?.k === "set" && (
-        <SetPasswordModal
-          token={modal.token}
-          mode={modal.mode}
-          name={modal.name}
-          onClose={() => setModal(null)}
-          onRequestNewLink={() => setModal({ k: "forgot" })}
-          onDone={() => {
-            setModal(null);
-            setError(null);
-            setNotice("Password set successfully. Please sign in.");
-          }}
-        />
-      )}
     </section>
   );
 }

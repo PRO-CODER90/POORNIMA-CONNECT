@@ -4,7 +4,7 @@ import { clientIp, fail, guardPost, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { appUrl, sendEmail } from "@/lib/mail";
 import { clearHits, isLimited, LOGIN_IP_LIMIT, LOGIN_LIMIT, MAIL_IP_LIMIT, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
-import { createToken } from "@/lib/tokens";
+import { consumeTempPassword, createToken, TTL } from "@/lib/tokens";
 import { findByEnrollment, maskEmail } from "@/lib/users";
 
 // A valid bcrypt hash (cost 12) compared against for unknown users, so timing doesn't reveal who exists.
@@ -45,7 +45,7 @@ export const POST = withErrors(async (req: Request) => {
     await recordHit(mailIpKey, MAIL_IP_LIMIT);
     try {
       const raw = await createToken(user.id, "setup");
-      await sendEmail(user.email, "setup", user.name, `${appUrl()}/?setup=${raw}`);
+      await sendEmail(user.email, "setup", { name: user.name, loginId: user.enrollment_no, link: `${appUrl()}/?setup=${raw}` });
     } catch (e) {
       console.error("setup email failed", e);
       return fail("EMAIL_SEND_FAILED");
@@ -58,6 +58,15 @@ export const POST = withErrors(async (req: Request) => {
   }
 
   const matches = await bcrypt.compare(password, user?.password_hash ?? DUMMY_HASH);
+
+  // Not the real password: maybe the temporary one from forgot-password. It's single-use, so it
+  // never opens a session; it only lets the user choose a new password right away.
+  if (user && !matches && (await consumeTempPassword(user.id, password))) {
+    await clearHits(keys);
+    const changeToken = await createToken(user.id, "setup", TTL.passwordChange);
+    return fail("PASSWORD_CHANGE_REQUIRED", { changeToken, name: user.name });
+  }
+
   if (!user || !matches) {
     await recordHit(keys, LOGIN_LIMIT);
     await recordHit(ipKey, LOGIN_IP_LIMIT);

@@ -69,3 +69,15 @@ export async function postJson<T = Record<string, unknown>>(url: string, body: u
     return { success: false, code: "NETWORK_ERROR", message: "Network error. Check your connection and try again." } as never;
   }
 }
+
+export function BackLink({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-xs text-sky-300 underline-offset-2 hover:underline focus:outline-none focus:ring-2 focus:ring-white/40"
+    >
+      ← Back to sign in
+    </button>
+  );
+}

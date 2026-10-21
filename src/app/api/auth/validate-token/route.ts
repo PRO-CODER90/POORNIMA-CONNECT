@@ -2,7 +2,7 @@ import { clientIp, fail, guardPost, ok, readJson, withErrors } from "@/lib/api";
 import { isLimited, recordHit, VALIDATE_LIMIT } from "@/lib/rateLimit";
 import { findValidToken } from "@/lib/tokens";
 
-// Lets the pop-up show "link expired" immediately instead of after the user types a password.
+// Lets the set-password screen show "link expired" immediately instead of after the user types a password.
 export const POST = withErrors(async (req: Request) => {
   const refused = guardPost(req);
   if (refused) return refused;

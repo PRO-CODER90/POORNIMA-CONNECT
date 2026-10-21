@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "@/components/Modal";
-import { ErrorBanner, ICON_MAIL, Icon, inputCls, postJson, primaryBtn, Spinner, SuccessBanner } from "@/components/ui";
+import { BackLink, ErrorBanner, ICON_MAIL, Icon, inputCls, postJson, primaryBtn, Spinner, SuccessBanner } from "@/components/ui";
 
-export default function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
+/** "Forgot password" screen shown inside the login card. */
+export default function ForgotPassword({ onBack }: { onBack: () => void }) {
   const [identifier, setIdentifier] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,34 +17,34 @@ export default function ForgotPasswordModal({ onClose }: { onClose: () => void }
     setBusy(true);
     const r = await postJson("/api/auth/forgot", { identifier: identifier.trim() });
     setBusy(false);
-    if (r.success) setSent(r.message ?? "If this account exists, a link has been sent to the registered email.");
+    if (r.success) setSent(r.message ?? "If this account exists, your login details have been sent to the registered email.");
     else setError(r.message ?? "Something went wrong. Please try again.");
   }
 
   return (
-    <Modal titleId="fp-title" onClose={onClose}>
+    <div className="text-left">
       {sent ? (
         <div className="space-y-4">
-          <h2 id="fp-title" className="pr-8 text-2xl font-semibold">Check your email</h2>
+          <h2 id="card-title" className="text-center text-2xl font-semibold">Check your email</h2>
           <SuccessBanner>{sent}</SuccessBanner>
-          <button type="button" onClick={onClose} data-autofocus className={primaryBtn}>Back to sign in</button>
+          <button type="button" onClick={onBack} autoFocus className={primaryBtn}>Back to sign in</button>
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-3" noValidate>
-          <h2 id="fp-title" className="pr-8 text-2xl font-semibold">Reset your password</h2>
+          <h2 id="card-title" className="text-center text-2xl font-semibold">Reset your password</h2>
           <p className="text-sm text-white/80">
-            Enter your university email or enrollment number. If you&apos;ve already set a password, we&apos;ll send a
-            reset link to the email on record.
+            Enter your university email or enrollment number. If you&apos;ve already set a password, we&apos;ll email your
+            login ID and a temporary password to the address on record.
           </p>
           <p className="text-xs text-white/65">
-            Haven&apos;t set a password yet? Close this and sign in with your enrollment number to get a setup link.
+            Haven&apos;t set a password yet? Go back and sign in with your enrollment number to get a setup link.
           </p>
           <div className="relative">
             <label htmlFor="fp-id" className="sr-only">Email or enrollment number</label>
             <Icon d={ICON_MAIL} />
             <input
               id="fp-id"
-              data-autofocus
+              autoFocus
               className={`${inputCls} pr-4`}
               placeholder="Email or Enrollment No."
               autoComplete="username"
@@ -55,10 +55,13 @@ export default function ForgotPasswordModal({ onClose }: { onClose: () => void }
           </div>
           {error && <ErrorBanner>{error}</ErrorBanner>}
           <button type="submit" disabled={busy} className={primaryBtn}>
-            {busy ? (<><Spinner /> Sending…</>) : "Send reset link"}
+            {busy ? (<><Spinner /> Sending…</>) : "Send login details"}
           </button>
+          <div className="pt-1 text-center">
+            <BackLink onClick={onBack} />
+          </div>
         </form>
       )}
-    </Modal>
+    </div>
   );
 }
