@@ -1,9 +1,13 @@
-import { after } from "next/server";
 import { clientIp, fail, guardPost, ok, readJson, withErrors } from "@/lib/api";
 import { sendEmail } from "@/lib/mail";
 import { FORGOT_LIMIT, isLimited, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
 import { createTempPassword } from "@/lib/tokens";
 import { findByEmailOrEnrollment } from "@/lib/users";
+
+// Every reply takes at least this long, so response time doesn't reveal whether the account exists
+// (looking it up and sending an email takes longer than finding nothing).
+const MIN_RESPONSE_MS = 2500;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const NEUTRAL =
   "If this account exists, your login ID and a temporary password have been sent to the registered email. The temporary password expires in 30 minutes.";
@@ -19,25 +23,31 @@ export const POST = withErrors(async (req: Request) => {
   if (await isLimited(ipKey, FORGOT_LIMIT)) return fail("TOO_MANY_REQUESTS");
   await recordHit(ipKey, FORGOT_LIMIT);
 
-  // Lookup, token and email run after the response is sent, so response time is identical whether or
-  // not the account exists. The reply never says which, and email failures are logged, not shown
-  // (showing them would reveal that the account exists).
-  after(async () => {
-    try {
-      const user = await findByEmailOrEnrollment(id);
+  // The work runs BEFORE replying (work scheduled after the response was not reliably executed on
+  // Vercel). The reply is the same in every case; the real outcome goes to the server log only.
+  const started = Date.now();
+  try {
+    const user = await findByEmailOrEnrollment(id);
+    if (!user) {
+      console.info("[forgot] skipped: no matching account");
+    } else if (!user.password_hash) {
       // Only accounts that already have a password. New users activate through sign-in
       // (enrollment route or Google), which proves they own the email.
-      if (!user || !user.password_hash) return;
-      const mailKey = [`forgotmail:${user.id}`];
-      if (await isLimited(mailKey, MAIL_LIMIT)) return;
-      await recordHit(mailKey, MAIL_LIMIT);
+      console.info(`[forgot] skipped: user ${user.id} has not set a password yet`);
+    } else if (await isLimited([`forgotmail:${user.id}`], MAIL_LIMIT)) {
+      console.info(`[forgot] skipped: user ${user.id} reached the hourly email limit`);
+    } else {
+      await recordHit([`forgotmail:${user.id}`], MAIL_LIMIT);
       // Login ID + a one-time temporary password, sent only to the email on record. The current
       // password keeps working, so a stranger requesting this can't lock the owner out.
       const temp = await createTempPassword(user.id);
       await sendEmail(user.email, "temp", { name: user.name, loginId: user.enrollment_no, tempPassword: temp });
-    } catch (e) {
-      console.error("forgot-password email failed", e);
+      console.info(`[forgot] sent login details to user ${user.id}`);
     }
-  });
+  } catch (e) {
+    console.error("[forgot] email failed", e);
+  }
+  const remaining = MIN_RESPONSE_MS - (Date.now() - started);
+  if (remaining > 0) await sleep(remaining);
   return ok({ message: NEUTRAL });
 });

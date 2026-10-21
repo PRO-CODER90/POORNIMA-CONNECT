@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import { after } from "next/server";
 import { clientIp, fail, guardPost, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { appUrl, sendEmail } from "@/lib/mail";
@@ -72,6 +71,6 @@ export const POST = withErrors(async (req: Request) => {
     await recordHit(ipKey, LOGIN_IP_LIMIT);
     return fail("INVALID_CREDENTIALS");
   }
-  after(() => clearHits(keys)); // per-account counters only; the per-IP counter keeps running
+  await clearHits(keys); // per-account counters only; the per-IP counter keeps running
   return startSession(user);
 });
