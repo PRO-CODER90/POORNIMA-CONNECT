@@ -46,7 +46,7 @@ export const POST = withErrors(async (req: Request) => {
       const raw = await createToken(user.id, "setup");
       await sendEmail(user.email, "setup", { name: user.name, loginId: user.enrollment_no, link: `${appUrl()}/?setup=${raw}` });
     } catch (e) {
-      console.error("setup email failed", e);
+      console.error("setup email failed", e instanceof Error ? e.message : "unknown error");
       return fail("EMAIL_SEND_FAILED");
     }
     const masked = maskEmail(user.email);

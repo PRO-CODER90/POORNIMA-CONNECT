@@ -48,7 +48,7 @@ export const POST = withErrors(async (req: Request) => {
   try {
     await sendEmail(user.email, "changed", { name: user.name });
   } catch (e) {
-    console.error("password-changed email failed", e); // the password is already saved; don't fail the request
+    console.error("password-changed email failed", e instanceof Error ? e.message : "unknown error"); // the password is already saved; don't fail the request
   }
   return ok({ message: "Password set successfully. Please sign in." }); // no auto-login
 });
