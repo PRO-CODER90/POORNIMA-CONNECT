@@ -10,5 +10,8 @@ export async function proxy(req: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-// API routes check the session themselves; only /dashboard is gated here.
-export const config = { matcher: ["/dashboard/:path*"] };
+// Signed-out visitors to any signed-in area go to the login page. API routes and the CafeConnect pages
+// still check the session (and role) themselves.
+export const config = {
+  matcher: ["/dashboard/:path*", "/student/:path*", "/staff/:path*", "/admin/:path*", "/cafe/:path*"],
+};

@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
   id              SERIAL PRIMARY KEY,
-  role            TEXT NOT NULL CHECK (role IN ('student','faculty')),
+  role            TEXT NOT NULL CHECK (role IN ('student','faculty','staff','admin')),
   enrollment_no   TEXT NOT NULL UNIQUE,            -- unique across roles: the role is derived from the record
   name            TEXT NOT NULL,
   email           TEXT NOT NULL UNIQUE,            -- stored lowercase
@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (email = lower(email))
 );
+
+-- Existing databases: allow the CafeConnect staff/admin roles (no-op if already allowed).
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('student','faculty','staff','admin'));
 
 CREATE TABLE IF NOT EXISTS auth_tokens (
   id          SERIAL PRIMARY KEY,

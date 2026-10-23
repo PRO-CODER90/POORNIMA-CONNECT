@@ -1,7 +1,7 @@
 // Messages shown to the user. Codes match the API responses (src/lib/api.ts).
 export const ERRORS = {
   MISSING_FIELDS: { status: 400, message: "Please fill in all required fields." },
-  INVALID_ENROLLMENT_FORMAT: { status: 400, message: "Enrollment number should contain digits only." },
+  INVALID_ENROLLMENT_FORMAT: { status: 400, message: "Login ID should contain only letters and numbers." },
   INVALID_CREDENTIALS: { status: 401, message: "Incorrect enrollment number or password. Please try again." },
   TOO_MANY_ATTEMPTS: { status: 429, message: "Too many failed attempts. Please try again in 10 minutes." },
   TOO_MANY_REQUESTS: { status: 429, message: "Too many requests. Please try again in 15 minutes." },

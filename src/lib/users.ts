@@ -1,6 +1,6 @@
 import { getDb } from "@/lib/db";
 
-export type Role = "student" | "faculty";
+export type Role = "student" | "faculty" | "staff" | "admin";
 
 export interface UserRow {
   id: number;
@@ -16,7 +16,7 @@ export interface UserRow {
 export async function findByEnrollment(enrollmentNo: string): Promise<UserRow | null> {
   const rows = await getDb()<UserRow[]>`
     SELECT id, role, enrollment_no, name, email, password_hash, token_version
-      FROM users WHERE enrollment_no = ${enrollmentNo.trim()}`;
+      FROM users WHERE enrollment_no = ${enrollmentNo.trim().toUpperCase()}`; // staff IDs are stored uppercase
   return rows[0] ?? null;
 }
 

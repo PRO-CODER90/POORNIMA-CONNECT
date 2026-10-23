@@ -28,3 +28,28 @@ npm run dev
 | `POST /api/auth/validate-token` | `{ token }` → `{ valid, purpose, name }` |
 | `POST /api/auth/reset` | `{ token, password, confirmPassword }`; used for reset and first-time setup |
 | `POST /api/auth/logout`, `GET /api/me` | session |
+
+## CafeConnect (campus cafe ordering)
+
+Merged from the PU CafeConnect project; its separate login was removed. Everyone signs in on the portal
+login page and is sent to their area by portal role:
+
+| Portal role | Login ID | Lands on | Can do |
+|---|---|---|---|
+| `student`, `faculty` | Enrollment No. | `/student/dashboard` | Browse the 3 cafes, order (cash), track orders, spending |
+| `staff` | Staff ID, e.g. `STF001` | `/staff/dashboard` | Run their cafe's order queue, confirm cash |
+| `admin` | any ID you choose | `/admin/dashboard` | Cafes, menus, staff, students, payments, reports, audit log |
+
+- The cafe-side account and student/admin profile are created automatically on first visit.
+- Staff are added in **Admin → Cafe Staff**: that creates their portal login (staff ID + password) and cafe assignment.
+- Code: pages in `src/app/{student,staff,admin,cafe}`, APIs in `src/app/api/{admin,cafes,orders,staff,student,notifications,health}`,
+  everything else in `src/cafe/`. The bridge from the portal session is `src/cafe/lib/auth.ts`.
+- Data: Prisma (`prisma/schema.prisma`) on the same Postgres. `npm run db:setup` creates the cafe tables
+  (`scripts/cafe-schema.sql`) and the cafes + menus (`scripts/cafe-seed.sql`).
+
+Create the first admin (they set their password from the setup email on first sign-in):
+
+```sql
+INSERT INTO users (role, enrollment_no, name, email) VALUES ('admin', 'ADMIN1', 'Canteen Admin', 'you@example.com');
+```
+
