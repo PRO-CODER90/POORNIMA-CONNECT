@@ -25,7 +25,7 @@ export async function verifyJwt<T = Record<string, unknown>>(token: string | und
 export interface SessionPayload {
   enrollmentNo: string;
   name: string;
-  role: "student" | "faculty";
+  role: "student" | "faculty" | "staff" | "admin";
   email: string;
   uid: number;
   tv: number; // token_version at login; a password change bumps it and kills older sessions

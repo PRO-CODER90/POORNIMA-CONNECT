@@ -14,11 +14,11 @@ export const POST = withErrors(async (req: Request) => {
   const refused = guardPost(req);
   if (refused) return refused;
   const body = await readJson(req);
-  const enr = String(body.enrollmentNo ?? "").trim();
+  const enr = String(body.enrollmentNo ?? "").trim().toUpperCase(); // staff IDs like STF001; student IDs are digits
   const password = typeof body.password === "string" ? body.password : "";
 
   if (!enr || !password) return fail("MISSING_FIELDS");
-  if (!/^\d{1,12}$/.test(enr)) return fail("INVALID_ENROLLMENT_FORMAT");
+  if (!/^[A-Z0-9]{1,12}$/.test(enr)) return fail("INVALID_ENROLLMENT_FORMAT");
 
   // Per IP+enrollment and per enrollment, so spoofed IPs can't brute-force one account.
   const ip = clientIp(req);

@@ -46,9 +46,9 @@ export default function LoginCard({ initialError, initialLink }: Props) {
     e.preventDefault();
     setError(null);
     setNotice(null);
-    const enr = enrollmentNo.trim();
+    const enr = enrollmentNo.trim().toUpperCase();
     if (!enr || !password) return setError(ERRORS.MISSING_FIELDS.message);
-    if (!/^\d+$/.test(enr)) return setError(ERRORS.INVALID_ENROLLMENT_FORMAT.message);
+    if (!/^[A-Z0-9]+$/.test(enr)) return setError(ERRORS.INVALID_ENROLLMENT_FORMAT.message);
 
     setBusy(true);
     const r = await postJson<{ redirect?: string; changeToken?: string; name?: string }>("/api/auth/login", { enrollmentNo: enr, password });
@@ -108,15 +108,14 @@ export default function LoginCard({ initialError, initialLink }: Props) {
             {notice && <SuccessBanner>{notice}</SuccessBanner>}
 
             <div className="relative">
-              <label htmlFor="enrollment" className="sr-only">Enrollment No.</label>
+              <label htmlFor="enrollment" className="sr-only">Enrollment No. or Staff ID</label>
               <Icon d={ICON_USER} />
               <input
                 id="enrollment"
                 name="username"
                 type="text"
                 className={`${inputCls} pr-4`}
-                placeholder="Enrollment No."
-                inputMode="numeric"
+                placeholder="Enrollment No. / Staff ID"
                 autoComplete="username"
                 maxLength={12}
                 aria-describedby={error ? "login-error" : undefined}

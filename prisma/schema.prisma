@@ -1,0 +1,219 @@
+// PU CafeConnect — Prisma schema
+//
+// Runs on the portal's Postgres (Neon). Table names are PascalCase ("User", "Cafe", ...), so they
+// sit alongside the portal's own lowercase tables (users, auth_tokens) without clashing.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────── AUTH / USERS ───────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  // Link to the portal account (public.users.id). Everyone signs in through the portal login;
+  // this row only holds the cafe-side role and profile links.
+  portalUserId Int?      @unique
+  email        String    @unique
+  passwordHash String    @default("!") // unused: passwords live in the portal's users table
+  role         String // STUDENT | CAFE_STAFF | ADMIN
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLogin    DateTime?
+
+  student       Student?
+  cafeStaff     CafeStaff?
+  admin         Admin?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model Student {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  studentCode String   @unique // e.g. PU2026001
+  name        String
+  email       String
+  department  String
+  course      String
+  year        Int
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[]
+}
+
+model CafeStaff {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  staffCode      String   @unique // e.g. STF001
+  name           String
+  assignedCafeId String
+  cafe           Cafe     @relation(fields: [assignedCafeId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  completedOrders Order[] @relation("CompletedByStaff")
+  paidOrders    Order[] @relation("PaidByStaff")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────── CAFES / MENU ───────────────────────────────
+
+model Cafe {
+  id           String   @id @default(cuid())
+  code         String   @unique // C1, C2, C3 — used in order numbers + QR routes
+  name         String
+  description  String   @default("")
+  location     String   @default("")
+  imageUrl     String?
+  coverEmoji   String   @default("☕")
+  openingTime  String   @default("08:00") // "HH:MM" 24h, local university time
+  closingTime  String   @default("20:00")
+  manualStatus String? // "OPEN" | "CLOSED" | null = auto from timings
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  categories Category[]
+  menuItems  MenuItem[]
+  staff      CafeStaff[]
+  orders     Order[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  cafeId      String
+  cafe        Cafe     @relation(fields: [cafeId], references: [id])
+  name        String
+  description String   @default("")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items MenuItem[]
+
+  @@unique([cafeId, name])
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  cafeId      String
+  cafe        Cafe     @relation(fields: [cafeId], references: [id])
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  name        String
+  description String   @default("")
+  price       Int // INR (integer rupees) — current menu price
+  emoji       String   @default("🍽️")
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  isActive    Boolean  @default(true) // soft delete
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+}
+
+// ─────────────────────────────── ORDERS / PAYMENTS ───────────────────────────────
+
+model Order {
+  id             String    @id @default(cuid())
+  orderNumber    String    @unique // PU-C1-20260927-0001
+  studentId      String
+  student        Student   @relation(fields: [studentId], references: [id])
+  cafeId         String
+  cafe           Cafe      @relation(fields: [cafeId], references: [id])
+  totalAmount    Int // server-calculated, never trusted from client
+  itemCount      Int       @default(0)
+  paymentMethod  String    @default("CASH")
+  paymentStatus  String    @default("PENDING") // PENDING | PAID
+  orderStatus    String    @default("PLACED") // PLACED|ACCEPTED|PREPARING|READY|COMPLETED|CANCELLED
+  cancelReason   String?
+  createdAt      DateTime  @default(now())
+  acceptedAt     DateTime?
+  preparingAt    DateTime?
+  readyAt        DateTime?
+  completedAt    DateTime?
+  completedById  String?
+  completedBy    CafeStaff? @relation("CompletedByStaff", fields: [completedById], references: [id])
+  paidAt         DateTime?
+  paidByStaffId  String? // CafeStaff.id — who confirmed the cash
+  paidByStaff    CafeStaff? @relation("PaidByStaff", fields: [paidByStaffId], references: [id])
+  updatedAt      DateTime  @updatedAt
+
+  items    OrderItem[]
+  payment  Payment?
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  orderId    String
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  itemName   String // snapshot — survives menu edits
+  quantity   Int
+  unitPrice  Int // snapshot of the price AT ORDER TIME
+  subtotal   Int
+  emoji      String  @default("🍽️")
+}
+
+model Payment {
+  id                 String    @id @default(cuid())
+  orderId            String    @unique
+  order              Order     @relation(fields: [orderId], references: [id])
+  method             String    @default("CASH")
+  amount             Int
+  status             String    @default("PENDING") // PENDING | PAID
+  receivedAt         DateTime?
+  receivedByStaffId  String?
+  createdAt          DateTime  @default(now())
+}
+
+// ─────────────────────────────── NOTIFICATIONS / AUDIT ───────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String // ORDER | PAYMENT | SYSTEM
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String // LOGIN | LOGOUT | ORDER_CREATED | ORDER_STATUS | PAYMENT_RECEIVED | ...
+  entityType String?
+  entityId   String?
+  metadata   String? // JSON string
+  createdAt  DateTime @default(now())
+
+  @@index([action, createdAt])
+}
