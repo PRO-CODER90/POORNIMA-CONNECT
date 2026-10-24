@@ -19,7 +19,7 @@ export default async function AdminCafesPage() {
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Cafe</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Timings</th>
@@ -33,7 +33,7 @@ export default async function AdminCafesPage() {
           </thead>
           <tbody>
             {cafes.map((c) => (
-              <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/60">
+              <tr key={c.id} className="border-b border-slate-50 hover:bg-pu-50/60">
                 <td className="px-4 py-3">
                   <Link href={`/admin/cafes/${c.id}`} className="flex items-center gap-2 font-extrabold text-slate-900 hover:underline">
                     <span className="text-lg" aria-hidden>{c.coverEmoji}</span> {c.name}

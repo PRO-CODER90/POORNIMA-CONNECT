@@ -56,7 +56,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
             ) : (
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                     <th className="px-4 py-2.5">Order</th>
                     <th className="px-4 py-2.5">Cafe</th>
                     <th className="px-4 py-2.5">Date</th>
@@ -96,7 +96,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
             {d.byCafe.length === 0 ? <p className="text-xs text-slate-400">No data yet.</p> : (
               <div className="space-y-2">
                 {d.byCafe.map((c) => (
-                  <div key={c.code} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                  <div key={c.code} className="flex items-center justify-between rounded-xl bg-pu-50/60 px-3 py-2">
                     <span className="text-xs font-bold text-slate-700">{c.coverEmoji} {c.name}</span>
                     <span className="text-sm font-black">{inr(c.total)}</span>
                   </div>

@@ -133,7 +133,7 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
         ) : (
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">Order ID</th>
                 <th className="px-4 py-3">Date / Time</th>
                 <th className="px-4 py-3">Cafe</th>
@@ -147,7 +147,7 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
             </thead>
             <tbody>
               {(data?.orders ?? []).map((o) => (
-                <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50/60">
+                <tr key={o.id} className="border-b border-slate-50 hover:bg-pu-50/60">
                   <td className="px-4 py-3 font-mono text-xs font-bold text-slate-800">{o.orderNumber}</td>
                   <td className="px-4 py-3 text-xs text-slate-500">{fmtDateTime(o.createdAt)}</td>
                   <td className="px-4 py-3 text-xs font-semibold">{o.cafe.name}</td>
@@ -179,12 +179,12 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
               <span className="text-xs text-slate-400">{detail.cafe.name} · {fmtDateTime(detail.createdAt)}</span>
             </div>
             <div className="grid gap-2 text-sm sm:grid-cols-2">
-              <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Student</span><div className="font-bold">{detail.student?.name}</div></div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Student ID</span><div className="font-mono text-xs font-bold">{detail.student?.studentCode}</div></div>
+              <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student</span><div className="font-bold">{detail.student?.name}</div></div>
+              <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student ID</span><div className="font-mono text-xs font-bold">{detail.student?.studentCode}</div></div>
               {detail.paidAt && (
                 <>
-                  <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Cash received at</span><div className="font-bold">{fmtDateTime(detail.paidAt)}</div></div>
-                  <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Approved by</span><div className="font-bold">{detail.paidByStaff ?? '—'}</div></div>
+                  <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Cash received at</span><div className="font-bold">{fmtDateTime(detail.paidAt)}</div></div>
+                  <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Approved by</span><div className="font-bold">{detail.paidByStaff ?? '—'}</div></div>
                 </>
               )}
             </div>

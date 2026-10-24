@@ -72,7 +72,7 @@ const placeholders = (n: number, from = 1) => Array.from({ length: n }, (_, i) =
 // Shared column list: seconds left on the lock and its end time, both from the database clock.
 const LOCK_COLS = `locked_until IS NOT NULL AND locked_until > now() AS locked,
   GREATEST(ceil(extract(epoch FROM locked_until - now())), 0)::int AS retry_s,
-  (extract(epoch FROM locked_until) * 1000)::float8 AS until_ms`;
+  round(extract(epoch FROM locked_until) * 1000)::float8 AS until_ms`;
 
 const OPEN = (attemptsLeft: number): GuardState => ({ locked: false, retryAfterS: 0, lockedUntil: null, attemptsLeft });
 

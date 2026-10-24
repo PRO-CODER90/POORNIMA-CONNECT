@@ -45,7 +45,7 @@ export default async function AdminPaymentsPage() {
           <div className="card overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                   <th className="px-4 py-3">Order</th>
                   <th className="px-4 py-3">Cafe</th>
                   <th className="px-4 py-3">Student</th>

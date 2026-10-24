@@ -8,7 +8,6 @@ interface GoogleId {
   initialize(cfg: {
     client_id: string;
     callback: (r: { credential: string }) => void;
-    hd?: string;
   }): void;
   renderButton(el: HTMLElement, opts: Record<string, unknown>): void;
 }
@@ -31,18 +30,23 @@ interface Props {
 export default function GoogleButton({ onSuccess, onError, onBusy, onSetupRequired }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  const [width, setWidth] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const inFlight = useRef(false);
   // Keep the latest callbacks without re-initialising Google on every render.
   const cb = useRef({ onSuccess, onError, onBusy, onSetupRequired });
   useEffect(() => {
     cb.current = { onSuccess, onError, onBusy, onSetupRequired };
   });
 
+  // Initialise once Google's script is ready.
   useEffect(() => {
-    if (!ready || !CLIENT_ID || !ref.current || !window.google) return;
+    if (!ready || !CLIENT_ID || !window.google) return;
     window.google.accounts.id.initialize({
       client_id: CLIENT_ID,
-      hd: "poornima.edu.in", // UI hint only; the server enforces the domain
       callback: async ({ credential }) => {
+        if (inFlight.current) return; // a second callback can arrive before React re-renders
+        inFlight.current = true;
         cb.current.onBusy(true);
         try {
           const res = await fetch("/api/auth/google", {
@@ -57,23 +61,54 @@ export default function GoogleButton({ onSuccess, onError, onBusy, onSetupRequir
         } catch {
           cb.current.onError(ERRORS.NETWORK_ERROR.message);
         } finally {
+          inFlight.current = false;
           cb.current.onBusy(false);
         }
       },
     });
+  }, [ready]);
+
+  // Fit the button to the card (Google needs a pixel width, 200-400) and follow resizes.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let t: ReturnType<typeof setTimeout>;
+    const measure = () => setWidth(Math.max(200, Math.min(400, Math.floor(el.clientWidth))));
+    measure();
+    const ro = new ResizeObserver(() => {
+      clearTimeout(t);
+      t = setTimeout(measure, 150);
+    });
+    ro.observe(el);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !width || !ref.current || !window.google) return;
+    ref.current.replaceChildren();
     window.google.accounts.id.renderButton(ref.current, {
       theme: "outline",
       size: "large",
       shape: "pill",
       text: "continue_with",
-      width: 320,
+      width,
       logo_alignment: "left",
     });
+  }, [ready, width]);
+
+  // Ad-blocker, offline or CSP: say so after 8 s instead of leaving a blank gap.
+  useEffect(() => {
+    if (ready) return;
+    const t = setTimeout(() => setFailed(true), 8000);
+    return () => clearTimeout(t);
   }, [ready]);
 
   if (!CLIENT_ID) {
     return (
-      <p className="text-xs text-white/70">
+      <p className="text-xs text-slate-500">
         Google sign-in is temporarily unavailable. Please use your enrollment number and password.
       </p>
     );
@@ -84,9 +119,18 @@ export default function GoogleButton({ onSuccess, onError, onBusy, onSetupRequir
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
         onReady={() => setReady(true)}
-        onError={() => cb.current.onError(ERRORS.GOOGLE_FAILED.message)}
+        onError={() => setFailed(true)}
       />
-      <div ref={ref} className="flex min-h-11 justify-center" />
+      {failed && !ready ? (
+        <p role="status" className="text-center text-xs text-slate-500">
+          Google sign-in couldn&apos;t load. Use your password instead.
+        </p>
+      ) : (
+        <div className="relative min-h-11 w-full">
+          {!ready && <div className="skeleton absolute inset-0 h-11 rounded-full" aria-hidden="true" />}
+          <div ref={ref} className="flex min-h-11 w-full justify-center" />
+        </div>
+      )}
     </>
   );
 }
