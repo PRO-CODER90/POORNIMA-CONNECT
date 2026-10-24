@@ -60,11 +60,28 @@ export interface GuardDb {
   tx<T>(fn: (q: Query) => Promise<T>): Promise<T>;
 }
 
+// Same DDL as scripts/schema.sql. Created on first use per server instance, so a deploy that lands before
+// `npm run db:setup` has run doesn't refuse every sign-in (the guard fails closed on a missing table).
+const DDL = `
+  CREATE TABLE IF NOT EXISTS login_attempts (
+    key TEXT PRIMARY KEY, fails INTEGER NOT NULL DEFAULT 0, strikes INTEGER NOT NULL DEFAULT 0,
+    window_start TIMESTAMPTZ NOT NULL DEFAULT now(), locked_until TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+  CREATE INDEX IF NOT EXISTS login_attempts_updated ON login_attempts (updated_at);
+  CREATE TABLE IF NOT EXISTS login_events (
+    id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(), login_id TEXT, ip TEXT, outcome TEXT NOT NULL, user_agent TEXT);
+  CREATE INDEX IF NOT EXISTS login_events_at ON login_events (at DESC);`;
+let ready: Promise<unknown> | null = null;
+
 function defaultDb(): GuardDb {
   const sql = getDb();
+  if (!ready) ready = sql.unsafe(DDL).simple().catch((e) => {
+    ready = null; // retry on the next request; this one fails closed below
+    throw e;
+  });
+  const once = ready;
   return {
-    query: (text, params = []) => sql.unsafe(text, params as never[]) as unknown as Promise<Row[]>,
-    tx: (fn) => sql.begin((t) => fn((text, params = []) => t.unsafe(text, params as never[]) as unknown as Promise<Row[]>)) as never,
+    query: async (text, params = []) => (await once, sql.unsafe(text, params as never[]) as unknown as Promise<Row[]>),
+    tx: async (fn) => (await once, sql.begin((t) => fn((text, params = []) => t.unsafe(text, params as never[]) as unknown as Promise<Row[]>)) as never),
   };
 }
 
