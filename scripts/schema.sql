@@ -34,3 +34,29 @@ INSERT INTO users (role, enrollment_no, name, email) VALUES
   ('faculty', '1234',  'Rockey', 'rockey.kumar@poornima.edu.in'),
   ('faculty', '1532',  'Kavita', 'kavita.jain@poornima.edu.in')
 ON CONFLICT DO NOTHING;
+
+-- Login attempt limiter (src/lib/loginGuard.ts). Shared by every server instance; updated atomically.
+CREATE TABLE IF NOT EXISTS login_attempts (
+  key          TEXT PRIMARY KEY,                   -- 'ie:<ip>:<ID>' | 'id:<ID>' | 'ip:<ip>'
+  fails        INTEGER     NOT NULL DEFAULT 0,
+  strikes      INTEGER     NOT NULL DEFAULT 0,     -- completed lockouts, drives escalation
+  window_start TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ,
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS login_attempts_updated ON login_attempts (updated_at);
+
+-- Sign-in audit trail. Never stores passwords.
+CREATE TABLE IF NOT EXISTS login_events (
+  id         BIGSERIAL PRIMARY KEY,
+  at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  login_id   TEXT,
+  ip         TEXT,
+  outcome    TEXT NOT NULL,                        -- SUCCESS | BAD_CREDENTIALS | LOCKED | LOCK_STARTED | GOOGLE_FAIL
+  user_agent TEXT
+);
+CREATE INDEX IF NOT EXISTS login_events_at ON login_events (at DESC);
+
+-- Housekeeping (runs with db:setup, never per login).
+DELETE FROM login_attempts WHERE updated_at < now() - interval '7 days';
+DELETE FROM login_events WHERE at < now() - interval '90 days';
