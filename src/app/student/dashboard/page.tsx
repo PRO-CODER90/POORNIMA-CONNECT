@@ -20,15 +20,15 @@ export default async function StudentDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <section aria-label="Welcome" className="relative -mx-4 overflow-hidden px-4 sm:mx-0 sm:px-0">
-        {/* mobile: a cropped strip of the campus behind the welcome text */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 lg:hidden" aria-hidden>
+      <section aria-label="Welcome" className="relative -mx-4 overflow-hidden px-4 sm:mx-0 sm:px-0 lg:overflow-visible">
+        {/* mobile: a soft strip of the painted campus behind the welcome text */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-44 lg:hidden" aria-hidden>
           <Image
-            src="/brand/hero-campus.webp"
+            src="/brand/hero-watercolor.webp"
             alt=""
             fill
             sizes="100vw"
-            className="object-cover opacity-60 [mask-image:linear-gradient(to_bottom,black_30%,transparent)]"
+            className="object-cover opacity-70 [mask-image:linear-gradient(to_bottom,black_40%,transparent)]"
           />
         </div>
 
@@ -50,16 +50,21 @@ export default async function StudentDashboardPage() {
             </p>
           </div>
 
-          {/* desktop: campus illustration + optional partner slot */}
-          <div className="hidden items-center gap-4 lg:flex" aria-hidden>
-            <div className="relative h-52 w-[30rem]">
+          {/* desktop: painted campus on pastel washes + optional partner slot */}
+          <div className="hidden items-center gap-4 lg:flex">
+            <div className="relative w-[30rem] py-4 xl:w-[34rem]">
+              <div aria-hidden className="absolute -left-10 top-4 h-56 w-64 rounded-full bg-[radial-gradient(closest-side,rgba(244,160,196,0.7),transparent)]" />
+              <div aria-hidden className="absolute -right-10 -top-6 h-60 w-72 rounded-full bg-[radial-gradient(closest-side,rgba(140,185,255,0.7),transparent)]" />
+              <div aria-hidden className="absolute -bottom-8 left-1/4 h-40 w-72 rounded-full bg-[radial-gradient(closest-side,rgba(255,214,130,0.65),transparent)]" />
               <Image
-                src="/brand/hero-campus.webp"
+                src="/brand/hero-watercolor.webp"
                 alt=""
-                fill
-                sizes="480px"
-                className="rounded-[2rem] object-cover [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_72%)]"
+                width={851}
+                height={547}
+                sizes="(min-width:1280px) 544px, 480px"
+                className="relative h-auto w-full animate-float drop-shadow-[0_18px_30px_rgba(18,39,95,0.18)]"
               />
+              {d.cafes.length > 0 ? <OpenNowChip open={d.cafes.filter((c) => c.status === 'OPEN').length} total={d.cafes.length} /> : null}
             </div>
             <PartnerBrand />
           </div>
@@ -172,6 +177,25 @@ export default async function StudentDashboardPage() {
         )}
       </section>
     </div>
+  );
+}
+
+/** Glass chip floating over the hero art: live count of open cafes. */
+function OpenNowChip({ open, total }: { open: number; total: number }) {
+  return (
+    <Link
+      href="/student/cafes"
+      className="absolute bottom-4 left-2 flex items-center gap-2.5 rounded-2xl border border-white/80 bg-white/75 px-3.5 py-2.5 shadow-[0_10px_30px_-12px_rgba(18,39,95,0.35)] backdrop-blur-md transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500 motion-reduce:transition-none"
+    >
+      <span className="relative flex h-2.5 w-2.5" aria-hidden>
+        {open > 0 ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-open opacity-60 motion-reduce:hidden" /> : null}
+        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${open > 0 ? 'bg-open' : 'bg-closed'}`} />
+      </span>
+      <span className="text-sm font-semibold text-ink">
+        {open} of {total} cafes open
+      </span>
+      <ArrowRight size={14} className="text-pu-600" aria-hidden />
+    </Link>
   );
 }
 

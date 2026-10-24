@@ -55,6 +55,12 @@ body {
   --color-tint-blue-bg: #e4eeff;   --color-tint-blue-fg: #2f63e8;
   --color-tint-orange-bg: #ffecd2; --color-tint-orange-fg: #f08a1c;
   --color-tint-green-bg: #dcf5e7;  --color-tint-green-fg: #1f9d62;
+  /* Gentle bob for the dashboard hero art (disabled for reduced motion). */
+  --animate-float: float 7s ease-in-out infinite;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
   --color-open: #1f9d62;
   --color-closed: #6b7385;
 }
@@ -112,6 +118,10 @@ body {
 }
 @utility input-pu {
   @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-slate-400 transition-colors focus:border-pu-500 focus:outline-none focus:ring-2 focus:ring-pu-500/30;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float { animation: none; }
 }
 
 /* subtle skeleton shimmer */
