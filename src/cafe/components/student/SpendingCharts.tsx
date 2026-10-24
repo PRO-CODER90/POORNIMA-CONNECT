@@ -2,6 +2,9 @@
 
 import { AreaTrend, BarTrend, Donut } from '@/cafe/components/charts';
 
+// primary, secondary, tertiary, quaternary (matches the stat-card tints)
+const PALETTE = ['#2f63e8', '#e0457b', '#f08a1c', '#1f9d62'];
+
 interface Point {
   label: string;
   value: number;
@@ -24,21 +27,21 @@ export default function SpendingCharts({
 }) {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
-      <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] sm:p-6">
-        <h3 className="mb-3 text-sm font-bold text-navy">Daily Spending (Last 7 Days)</h3>
-        <AreaTrend data={daily} color="#C18A42" />
+      <div className="surface p-5">
+        <h3 className="mb-3 text-base font-bold text-ink">Daily Spending (Last 7 Days)</h3>
+        <AreaTrend data={daily} color={PALETTE[0]} />
       </div>
-      <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] sm:p-6">
-        <h3 className="mb-3 text-sm font-bold text-navy">Monthly Spending</h3>
-        <BarTrend data={monthly} color="#17243A" />
+      <div className="surface p-5">
+        <h3 className="mb-3 text-base font-bold text-ink">Monthly Spending</h3>
+        <BarTrend data={monthly} color={PALETTE[1]} />
       </div>
-      <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] sm:p-6">
-        <h3 className="mb-3 text-sm font-bold text-navy">Category-wise Spending</h3>
-        <Donut data={byCategory} />
+      <div className="surface p-5">
+        <h3 className="mb-3 text-base font-bold text-ink">Category-wise Spending</h3>
+        <Donut data={byCategory} palette={PALETTE} />
       </div>
-      <div className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] sm:p-6">
-        <h3 className="mb-3 text-sm font-bold text-navy">Cafe-wise Spending</h3>
-        <Donut data={byCafe} />
+      <div className="surface p-5">
+        <h3 className="mb-3 text-base font-bold text-ink">Cafe-wise Spending</h3>
+        <Donut data={byCafe} palette={PALETTE} />
       </div>
     </div>
   );

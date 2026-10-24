@@ -28,6 +28,8 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   match?: (p: string) => boolean;
+  /** Shorter label for tight spots (the student dock below `sm`). */
+  shortLabel?: string;
 }
 
 export interface RoleNavDef {
@@ -53,7 +55,8 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
       {
         href: '/student/dashboard',
         label: 'Dashboard',
-        icon: LayoutDashboard,
+        shortLabel: 'Home',
+        icon: Home,
         match: (p) => p === '/student/dashboard' || p === '/student',
       },
       {
@@ -65,12 +68,14 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
       {
         href: '/student/orders',
         label: 'My Orders',
+        shortLabel: 'Orders',
         icon: ReceiptText,
         match: (p) => p.startsWith('/student/orders'),
       },
       {
         href: '/student/spending',
         label: 'My Spending',
+        shortLabel: 'Spending',
         icon: Wallet,
         match: (p) => p.startsWith('/student/spending'),
       },

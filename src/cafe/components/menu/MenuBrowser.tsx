@@ -55,7 +55,7 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
       <div className="relative">
         <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden />
         <input
-          className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-xs font-medium text-navy placeholder:text-slate-400 focus:border-amber focus:outline-none focus:ring-1 focus:ring-amber/40 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors"
+          className="input-pu pl-10 shadow-sm"
           placeholder="Search items by name or description..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -89,7 +89,7 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
           {filtered.map((item) => (
             <article
               key={item.id}
-              className={`group flex flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] transition-all hover:border-slate-300 hover:shadow-md ${
+              className={`surface group flex flex-col overflow-hidden transition-shadow hover:shadow-md ${
                 !item.isAvailable ? 'opacity-75' : ''
               }`}
             >
@@ -100,14 +100,14 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
                   setQty(1);
                   setAdded(false);
                 }}
-                className="relative flex h-32 sm:h-36 cursor-pointer items-center justify-center border-b border-slate-100 bg-[#F8F7F3] p-4"
+                className="relative flex h-32 sm:h-36 cursor-pointer items-center justify-center border-b border-slate-100 bg-pu-50/60 p-4"
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200/80 bg-white text-3xl shadow-sm transition-transform duration-300 group-hover:scale-110">
                   <span aria-hidden>{item.emoji}</span>
                 </div>
 
                 <div className="absolute left-2.5 top-2.5">
-                  <span className="rounded border border-slate-200/80 bg-white/95 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-slate-500 shadow-sm backdrop-blur">
+                  <span className="rounded border border-slate-200/80 bg-white/95 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-muted shadow-sm backdrop-blur">
                     {catName(item.categoryId)}
                   </span>
                 </div>
@@ -128,24 +128,24 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
                     setSelected(item);
                     setQty(1);
                   }}
-                  className="text-left text-sm font-semibold text-navy transition-colors hover:text-amber line-clamp-1"
+                  className="text-left text-sm font-semibold text-ink transition-colors hover:text-pu-600 line-clamp-1"
                 >
                   {item.name}
                 </button>
-                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
                   {item.description}
                 </p>
 
                 {/* Price and Cart button */}
                 <div className="mt-auto flex items-center justify-between pt-3.5 border-t border-slate-100">
-                  <span className="font-mono text-sm font-bold text-navy">
+                  <span className="font-mono text-sm font-bold text-ink">
                     {inr(item.price)}
                   </span>
 
                   <button
                     onClick={() => doAdd(item, 1)}
                     disabled={!item.isAvailable || !isOpen}
-                    className="inline-flex items-center gap-1 rounded-lg bg-navy px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-amber active:bg-amber-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                    className="btn-solid-pu px-3 py-1.5"
                     aria-label={`Add ${item.name} to cart`}
                   >
                     <Plus size={13} aria-hidden />
@@ -163,7 +163,7 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
         {selected && (
           <div className="space-y-4">
             <div
-              className="flex h-36 items-center justify-center rounded-xl border border-slate-200/80 bg-warm-100 text-6xl"
+              className="flex h-36 items-center justify-center rounded-xl border border-slate-200/80 bg-pu-50/60 text-6xl"
               aria-hidden
             >
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200/80 bg-white shadow-sm">
@@ -173,10 +173,10 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
 
             <div>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-base font-bold text-navy">{selected.name}</h3>
-                <span className="font-mono text-lg font-bold text-navy">{inr(selected.price)}</span>
+                <h3 className="text-base font-bold text-ink">{selected.name}</h3>
+                <span className="font-mono text-lg font-bold text-ink">{inr(selected.price)}</span>
               </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-slate-500">{selected.description}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">{selected.description}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -198,7 +198,7 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-8 text-center font-mono text-sm font-bold text-navy">{qty}</span>
+                <span className="w-8 text-center font-mono text-sm font-bold text-ink">{qty}</span>
                 <button
                   onClick={() => setQty((q) => Math.min(99, q + 1))}
                   className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -215,7 +215,7 @@ export default function MenuBrowser({ cafe }: { cafe: MenuCafe }) {
                 setSelected(null);
               }}
               disabled={!selected.isAvailable || !isOpen}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-navy py-2.5 text-xs font-semibold text-white transition-colors hover:bg-amber disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+              className="btn-solid-pu mt-3 w-full py-2.5"
             >
               {added
                 ? 'Added to cart ✓'
@@ -236,10 +236,10 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
+      className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500 ${
         active
-          ? 'bg-navy text-white shadow-sm'
-          : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-navy'
+          ? 'bg-pu-600 text-white shadow-sm'
+          : 'border border-slate-200 bg-white text-ink/70 hover:bg-pu-50 hover:text-pu-700'
       }`}
       aria-pressed={active}
     >

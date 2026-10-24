@@ -49,7 +49,7 @@ export default function CartDrawer() {
   return (
     <div className={`fixed inset-0 z-50 ${cart.drawerOpen ? '' : 'pointer-events-none'}`} aria-hidden={!cart.drawerOpen}>
       <div
-        className={`absolute inset-0 bg-navy-950/60 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-pu-900/50 backdrop-blur-sm transition-opacity duration-300 ${
           cart.drawerOpen ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={cart.drawerOpen ? close : undefined}
@@ -68,13 +68,13 @@ export default function CartDrawer() {
             <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-600 shadow-sm">
               <span className="text-2xl font-bold">✓</span>
             </div>
-            <h2 className="mt-3 text-lg font-bold text-navy">Order Placed Successfully</h2>
-            <p className="mt-1 text-xs text-slate-500">
+            <h2 className="mt-3 text-lg font-bold text-ink">Order Placed Successfully</h2>
+            <p className="mt-1 text-xs text-muted">
               Your order has been queued in the cafe kitchen.
             </p>
 
-            <div className="mt-5 w-full space-y-2.5 rounded-xl border border-slate-200/90 bg-warm-50/50 p-4 text-left text-xs">
-              <Row k="Order Number" v={<span className="font-mono text-xs font-semibold text-navy">{placed.orderNumber}</span>} />
+            <div className="mt-5 w-full space-y-2.5 rounded-xl border border-slate-200/90 bg-pu-50/40 p-4 text-left text-xs">
+              <Row k="Order Number" v={<span className="font-mono text-xs font-semibold text-ink">{placed.orderNumber}</span>} />
               <Row k="Campus Cafe" v={<span className="font-medium text-slate-800">{placed.cafe.name}</span>} />
 
               <div className="border-t border-slate-200/60 pt-2">
@@ -92,19 +92,19 @@ export default function CartDrawer() {
               </div>
 
               <div className="border-t border-slate-200/60 pt-2">
-                <Row k="Total Amount" v={<span className="font-mono text-sm font-bold text-navy">{inr(placed.totalAmount)}</span>} />
+                <Row k="Total Amount" v={<span className="font-mono text-sm font-bold text-ink">{inr(placed.totalAmount)}</span>} />
               </div>
               <Row k="Payment Method" v="CASH at the counter" />
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] font-medium text-slate-500">Payment Status</span>
+                <span className="text-[11px] font-medium text-muted">Payment Status</span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber" />
                   CASH PENDING
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-slate-500">Order Status</span>
+                <span className="text-[11px] font-medium text-muted">Order Status</span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-800">
                   <span className="h-1.5 w-1.5 rounded-full bg-sky-600" />
                   PLACED
@@ -115,14 +115,14 @@ export default function CartDrawer() {
             <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-left text-xs text-amber-900">
               <Banknote size={16} className="mt-0.5 shrink-0 text-amber" aria-hidden />
               <div>
-                <span className="font-semibold text-navy">Payment Instructions: </span>
+                <span className="font-semibold text-ink">Payment Instructions: </span>
                 Please pay <span className="font-mono font-bold">{inr(placed.totalAmount)}</span> in cash directly to the cafe staff at the counter.
               </div>
             </div>
 
             <Link
               href={`/student/orders/${placed.id}`}
-              className="mt-5 inline-flex w-full items-center justify-center rounded-lg bg-navy py-2.5 text-xs font-semibold text-white transition-colors hover:bg-navy-700"
+              className="btn-solid-pu mt-5 w-full py-2.5"
               onClick={close}
             >
               Track Order Progress
@@ -139,10 +139,10 @@ export default function CartDrawer() {
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-navy text-white">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-pu-600 text-white">
                   <ShoppingCart size={14} aria-hidden />
                 </div>
-                <h2 className="text-sm font-bold text-navy">Your Cart</h2>
+                <h2 className="text-sm font-bold text-ink">Your Cart</h2>
                 {cart.items.length > 0 && (
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                     {cart.count} items
@@ -151,7 +151,7 @@ export default function CartDrawer() {
               </div>
               <button
                 onClick={close}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-navy transition-colors"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-pu-600 transition-colors"
                 aria-label="Close cart drawer"
               >
                 <X size={16} />
@@ -168,7 +168,7 @@ export default function CartDrawer() {
                 />
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-navy">
+                  <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-ink">
                     <span className="text-sm">{cart.items[0].emoji}</span>
                     <span className="truncate">{cart.items[0].cafeName}</span>
                   </div>
@@ -177,14 +177,14 @@ export default function CartDrawer() {
                     {cart.items.map((i) => (
                       <div key={i.menuItemId} className="flex items-center gap-3 p-3">
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-[#F8F7F3] text-lg"
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-pu-50/60 text-lg"
                           aria-hidden
                         >
                           {i.emoji}
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-xs font-semibold text-navy">{i.name}</div>
+                          <div className="truncate text-xs font-semibold text-ink">{i.name}</div>
                           <div className="font-mono text-[11px] text-slate-400">
                             {inr(i.price)} × {i.quantity}
                           </div>
@@ -198,7 +198,7 @@ export default function CartDrawer() {
                           >
                             <Minus size={12} />
                           </button>
-                          <span className="w-5 text-center font-mono text-xs font-semibold text-navy">
+                          <span className="w-5 text-center font-mono text-xs font-semibold text-ink">
                             {i.quantity}
                           </span>
                           <button
@@ -217,7 +217,7 @@ export default function CartDrawer() {
                           </button>
                         </div>
 
-                        <div className="w-16 text-right font-mono text-xs font-bold text-navy">
+                        <div className="w-16 text-right font-mono text-xs font-bold text-ink">
                           {inr(i.price * i.quantity)}
                         </div>
                       </div>
@@ -230,19 +230,19 @@ export default function CartDrawer() {
             {/* Cart Summary & Checkout */}
             {cart.items.length > 0 && (
               <div className="space-y-3.5 border-t border-slate-100 bg-white px-5 py-4 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
-                <div className="flex justify-between text-xs text-slate-500">
+                <div className="flex justify-between text-xs text-muted">
                   <span>Subtotal</span>
                   <span className="font-mono font-medium text-slate-700">{inr(cart.subtotal)}</span>
                 </div>
                 <div className="flex items-baseline justify-between border-t border-slate-100 pt-2">
-                  <span className="text-xs font-semibold text-navy">Total Payable</span>
-                  <span className="font-mono text-lg font-bold text-navy">{inr(cart.subtotal)}</span>
+                  <span className="text-xs font-semibold text-ink">Total Payable</span>
+                  <span className="font-mono text-lg font-bold text-ink">{inr(cart.subtotal)}</span>
                 </div>
 
                 <div className="flex items-start gap-2.5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs text-amber-900">
                   <Banknote size={15} className="mt-0.5 shrink-0 text-amber" aria-hidden />
                   <div className="leading-relaxed">
-                    <span className="font-semibold text-navy">Cash Only: </span>
+                    <span className="font-semibold text-ink">Cash Only: </span>
                     Present order number and pay exact cash at counter upon confirmation.
                   </div>
                 </div>
@@ -252,7 +252,7 @@ export default function CartDrawer() {
                 <button
                   onClick={placeOrder}
                   disabled={busy || cart.items.length === 0}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-navy py-3 text-xs font-semibold tracking-wider text-white uppercase transition-colors hover:bg-navy-700 active:bg-navy-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  className="btn-solid-pu w-full py-3 uppercase tracking-wider"
                 >
                   {busy ? (
                     <>
@@ -279,7 +279,7 @@ export default function CartDrawer() {
 function Row({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[11px] font-medium text-slate-500">{k}</span>
+      <span className="text-[11px] font-medium text-muted">{k}</span>
       <span className="text-xs font-medium text-slate-800">{v}</span>
     </div>
   );
