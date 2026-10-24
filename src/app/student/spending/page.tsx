@@ -1,6 +1,6 @@
 import { requireStudentPage } from '@/cafe/lib/rbac';
 import { studentSpending } from '@/cafe/server/student';
-import { StatCard, EmptyState } from '@/cafe/components/ui';
+import { StatCard, EmptyState, PageHeader } from '@/cafe/components/ui';
 import { inr } from '@/cafe/lib/money';
 import { dateKey } from '@/cafe/lib/dates';
 import SpendingCharts from '@/cafe/components/student/SpendingCharts';
@@ -15,46 +15,45 @@ export default async function StudentSpendingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="border-b border-slate-200/80 pb-5">
-        <h1 className="text-2xl font-bold tracking-tight text-navy sm:text-3xl">My Spending Analytics</h1>
-        <p className="mt-1 text-xs text-slate-500">
-          Personal dining expenditure breakdown and historical trends across campus cafes.
-        </p>
-      </div>
+      <PageHeader
+        title="My Spending Analytics"
+        sub="Personal dining expenditure breakdown and historical trends across campus cafes."
+      />
 
-      <section className="grid grid-cols-2 gap-3.5 lg:grid-cols-4" aria-label="Spending summary metrics">
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Spending summary metrics">
         <StatCard
           label="Today's Spending"
           value={inr(d.summary.today)}
           sub="Spent today"
-          icon={<Wallet size={16} className="text-amber" />}
-          tone="amber"
+          icon={<Wallet size={24} />}
+          tint="pink"
         />
         <StatCard
           label="This Week"
           value={inr(d.summary.week)}
           sub="Last 7 days"
-          icon={<Calendar size={16} className="text-navy" />}
-          tone="navy"
+          icon={<Calendar size={24} />}
+          tint="blue"
         />
         <StatCard
           label="This Month"
           value={inr(d.summary.month)}
           sub="Current calendar month"
-          icon={<CalendarDays size={16} className="text-sky-600" />}
-          tone="blue"
+          icon={<CalendarDays size={24} />}
+          tint="orange"
         />
         <StatCard
           label="Total Spending"
           value={inr(d.summary.total)}
           sub={`${d.summary.ordersTotal} lifetime orders`}
-          icon={<TrendingUp size={16} className="text-emerald-600" />}
-          tone="green"
+          icon={<TrendingUp size={24} />}
+          tint="green"
         />
       </section>
 
       {d.summary.total === 0 ? (
         <EmptyState
+          surface
           icon={<Wallet size={24} />}
           title="No spending recorded yet"
           sub="Place your first cafe order to generate your personal expenditure breakdown."
@@ -62,26 +61,26 @@ export default async function StudentSpendingPage() {
       ) : (
         <>
           {/* Cafe-wise breakdown */}
-          <section className="rounded-xl border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] sm:p-6" aria-labelledby="cafe-wise">
-            <h2 id="cafe-wise" className="mb-4 text-sm font-bold text-navy">
+          <section className="surface p-5 sm:p-6" aria-labelledby="cafe-wise">
+            <h2 id="cafe-wise" className="mb-4 text-base font-bold text-ink">
               Campus Cafe Expenditure Breakdown
             </h2>
             <div className="grid gap-3.5 sm:grid-cols-3">
               {d.byCafe.map((c) => {
                 const percentage = d.summary.total ? Math.round((c.total / d.summary.total) * 100) : 0;
                 return (
-                  <div key={c.id} className="rounded-xl border border-slate-100 bg-[#F8F7F3] p-4">
-                    <div className="flex items-center justify-between text-xs font-semibold text-navy">
+                  <div key={c.id} className="rounded-xl border border-pu-100 bg-pu-50/60 p-4">
+                    <div className="flex items-center justify-between text-xs font-semibold text-ink">
                       <span className="truncate">{c.name}</span>
-                      <span className="font-mono text-[11px] text-slate-400">{percentage}%</span>
+                      <span className="font-mono text-[11px] text-muted">{percentage}%</span>
                     </div>
-                    <div className="mt-2 font-mono text-xl font-bold text-navy">{inr(c.total)}</div>
-                    <div className="mt-0.5 text-[11px] text-slate-400">
+                    <div className="mt-2 font-mono text-xl font-bold text-ink">{inr(c.total)}</div>
+                    <div className="mt-0.5 text-[11px] text-muted">
                       {c.orders} order{c.orders === 1 ? '' : 's'} placed
                     </div>
                     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-amber transition-all duration-500"
+                        className="h-full rounded-full bg-pu-600 transition-all duration-500"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -101,7 +100,7 @@ export default async function StudentSpendingPage() {
         </>
       )}
 
-      <p className="text-center text-[11px] text-slate-400">
+      <p className="text-center text-[11px] text-muted">
         Figures exclude cancelled orders · Verified against university ledger as of {dateKey()}
       </p>
     </div>

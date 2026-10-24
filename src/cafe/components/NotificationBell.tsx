@@ -14,7 +14,7 @@ interface Notif {
   createdAt: string;
 }
 
-export default function NotificationBell() {
+export default function NotificationBell({ variant = 'default' }: { variant?: 'default' | 'student' }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
@@ -59,24 +59,42 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={boxRef}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-200/60 hover:text-navy transition-colors"
-        aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
-      >
-        <Bell size={18} />
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-white shadow-sm">
-            {unread > 9 ? '9+' : unread}
-          </span>
-        )}
-      </button>
+      {variant === 'student' ? (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/80 bg-white text-pu-900 shadow-sm transition-colors hover:bg-pu-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500"
+          aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
+        >
+          <Bell size={18} />
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-600 px-1 text-[9px] font-bold text-white shadow-sm">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-200/60 hover:text-navy transition-colors"
+          aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
+        >
+          <Bell size={18} />
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-white shadow-sm">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
+      )}
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <span className="text-xs font-bold text-navy">Notifications</span>
             {unread > 0 && (
-              <button onClick={markAll} className="text-[11px] font-semibold text-amber hover:underline">
+              <button
+                onClick={markAll}
+                className={`text-[11px] font-semibold hover:underline ${variant === 'student' ? 'text-pu-600' : 'text-amber'}`}
+              >
                 Mark all as read
               </button>
             )}

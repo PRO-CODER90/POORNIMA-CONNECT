@@ -47,7 +47,7 @@ export default function OrdersList() {
     <div className="space-y-4">
       {/* Filters row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+        <div className="no-scrollbar flex gap-1 overflow-x-auto rounded-full border border-slate-200/80 bg-white p-1 shadow-sm" role="group" aria-label="Order date range">
           {RANGES.map((r) => (
             <button
               key={r.id}
@@ -55,10 +55,8 @@ export default function OrdersList() {
                 setCustom({ from: '', to: '' });
                 setRange(r.id);
               }}
-              className={`shrink-0 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
-                range === r.id && !useCustom
-                  ? 'bg-navy text-white shadow-sm'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-navy'
+              className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500 ${
+                range === r.id && !useCustom ? 'bg-pu-600 text-white shadow-sm' : 'text-ink/70 hover:bg-pu-50 hover:text-pu-700'
               }`}
               aria-pressed={range === r.id && !useCustom}
             >
@@ -67,7 +65,7 @@ export default function OrdersList() {
           ))}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+        <div className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white px-4 py-2 shadow-sm">
           <input
             type="date"
             value={custom.from}
@@ -90,21 +88,19 @@ export default function OrdersList() {
       <div className="space-y-3">
         {loading ? (
           <>
-            <Skeleton className="h-24 w-full rounded-xl" />
-            <Skeleton className="h-24 w-full rounded-xl" />
-            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
           </>
         ) : error ? (
           <ErrorNote message={error} />
         ) : (data ?? []).length === 0 ? (
           <EmptyState
+            surface
             title="No orders found for this period"
             sub="Try selecting a different date range or visit campus cafes to place an order."
             action={
-              <Link
-                href="/student/cafes"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-navy-700"
-              >
+              <Link href="/student/cafes" className="btn-solid-pu">
                 Browse Campus Cafes
               </Link>
             }
@@ -114,27 +110,27 @@ export default function OrdersList() {
             <Link
               key={o.id}
               href={`/student/orders/${o.id}`}
-              className="group block rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] transition-all hover:border-slate-300 hover:shadow-sm"
+              className="surface group block p-4 transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
+                <div className="w-full min-w-0 sm:w-auto sm:flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs font-semibold text-navy group-hover:text-amber transition-colors">
+                    <span className="font-mono text-xs font-semibold text-pu-600">
                       {o.orderNumber}
                     </span>
                     <span className="text-xs text-slate-300" aria-hidden>·</span>
                     <span className="text-xs font-medium text-slate-700">{o.cafe.name}</span>
                     <span className="text-xs text-slate-300" aria-hidden>·</span>
-                    <span className="text-xs text-slate-400">{timeAgo(o.createdAt)}</span>
+                    <span className="text-xs text-muted">{timeAgo(o.createdAt)}</span>
                   </div>
 
-                  <div className="mt-2 line-clamp-1 text-xs text-slate-500">
+                  <div className="mt-2 line-clamp-1 text-xs text-muted">
                     {o.items.map((i) => `${i.name} × ${i.quantity}`).join('  ·  ')}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-sm font-bold text-navy">{inr(o.totalAmount)}</span>
+                  <span className="font-mono text-sm font-bold text-ink">{inr(o.totalAmount)}</span>
                   <PaymentBadge status={o.paymentStatus} />
                   <OrderStatusBadge status={o.orderStatus} />
                 </div>
@@ -145,7 +141,7 @@ export default function OrdersList() {
       </div>
 
       {hasActive && (
-        <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-slate-400">
+        <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-muted">
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Live kitchen polling active — order updates appear automatically</span>
         </div>

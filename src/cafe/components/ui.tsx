@@ -5,19 +5,52 @@ import { X } from 'lucide-react';
 
 // ── small shared primitives (keep pages lean) ──
 
+type TintTone = 'pink' | 'blue' | 'orange' | 'green';
+type LegacyTone = 'default' | 'brand' | 'green' | 'red' | 'blue' | 'navy' | 'amber';
+
+const TINTS: Record<TintTone, string> = {
+  pink: 'bg-tint-pink-bg text-tint-pink-fg',
+  blue: 'bg-tint-blue-bg text-tint-blue-fg',
+  orange: 'bg-tint-orange-bg text-tint-orange-fg',
+  green: 'bg-tint-green-bg text-tint-green-fg',
+};
+
+/**
+ * Metric card. `tint` selects the student-panel look (pastel icon tile);
+ * without it the legacy staff/admin card renders with `tone`.
+ */
 export function StatCard({
   label,
   value,
   sub,
   icon,
   tone = 'default',
+  tint,
 }: {
   label: string;
   value: ReactNode;
   sub?: string;
   icon?: ReactNode;
-  tone?: 'default' | 'brand' | 'green' | 'red' | 'blue' | 'navy' | 'amber';
+  tone?: LegacyTone;
+  tint?: TintTone;
 }) {
+  if (tint) {
+    return (
+      <div className="surface flex flex-col items-start gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+        {icon ? (
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl sm:h-14 sm:w-14 ${TINTS[tint]}`} aria-hidden>
+            {icon}
+          </div>
+        ) : null}
+        <div className="min-w-0 w-full">
+          <div className="text-sm font-medium leading-snug text-ink/80">{label}</div>
+          <div className="truncate text-2xl font-bold tracking-tight text-ink sm:text-3xl">{value}</div>
+          {sub ? <div className="text-xs leading-snug text-muted">{sub}</div> : null}
+        </div>
+      </div>
+    );
+  }
+
   const tones: Record<string, string> = {
     default: 'text-navy',
     brand: 'text-brand-600',
@@ -39,6 +72,19 @@ export function StatCard({
       </div>
       <div className={`mt-2 truncate text-xl font-bold tracking-tight ${tones[tone]}`}>{value}</div>
       {sub ? <div className="mt-1 truncate text-[11px] text-slate-400">{sub}</div> : null}
+    </div>
+  );
+}
+
+/** Student-panel page title: h1, subtitle, optional right slot. */
+export function PageHeader({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-3xl font-bold tracking-tight text-ink">{title}</h1>
+        {sub ? <p className="mt-1 text-sm text-muted">{sub}</p> : null}
+      </div>
+      {right ? <div className="shrink-0">{right}</div> : null}
     </div>
   );
 }
@@ -90,24 +136,35 @@ export function EmptyState({
   title,
   sub,
   action,
+  surface,
 }: {
   emoji?: string;
   icon?: ReactNode;
   title: string;
   sub?: string;
   action?: ReactNode;
+  /** Student-panel look (white `surface` card, blue icon tile). */
+  surface?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+    <div
+      className={`flex flex-col items-center justify-center gap-2 px-6 py-12 text-center ${
+        surface ? 'surface' : 'rounded-xl border border-dashed border-slate-300 bg-white'
+      }`}
+    >
       {icon ? (
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 mb-1">
+        <div
+          className={`mb-1 flex h-12 w-12 items-center justify-center rounded-xl ${
+            surface ? 'bg-pu-50 text-pu-600' : 'border border-slate-200/80 bg-slate-50 text-slate-500'
+          }`}
+        >
           {icon}
         </div>
       ) : emoji ? (
         <div className="text-3xl mb-1">{emoji}</div>
       ) : null}
-      <div className="text-sm font-semibold text-navy">{title}</div>
-      {sub ? <div className="max-w-xs text-xs text-slate-500 leading-relaxed">{sub}</div> : null}
+      <div className={`text-sm font-semibold ${surface ? 'text-ink' : 'text-navy'}`}>{title}</div>
+      {sub ? <div className={`max-w-xs text-xs leading-relaxed ${surface ? 'text-muted' : 'text-slate-500'}`}>{sub}</div> : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </div>
   );

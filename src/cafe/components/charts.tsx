@@ -57,7 +57,17 @@ export function BarTrend({ data, color = '#f97316', height = 220 }: { data: { la
   );
 }
 
-export function Donut({ data, height = 240, money = true }: { data: { name: string; value: number }[]; height?: number; money?: boolean }) {
+export function Donut({
+  data,
+  height = 240,
+  money = true,
+  palette = PALETTE,
+}: {
+  data: { name: string; value: number }[];
+  height?: number;
+  money?: boolean;
+  palette?: string[];
+}) {
   if (data.length === 0) {
     return <div className="flex items-center justify-center text-xs text-slate-400" style={{ height }}>No data yet</div>;
   }
@@ -67,7 +77,7 @@ export function Donut({ data, height = 240, money = true }: { data: { name: stri
         <PieChart>
           <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} strokeWidth={0}>
             {data.map((_, i) => (
-              <Cell key={i} fill={PALETTE[i % PALETTE.length]} />
+              <Cell key={i} fill={palette[i % palette.length]} />
             ))}
           </Pie>
           <Tooltip formatter={(v) => (money ? inr(Number(v)) : String(v))} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
