@@ -33,7 +33,7 @@ export default function SpendingCharts({
       </div>
       <div className="surface p-5">
         <h3 className="mb-3 text-base font-bold text-ink">Monthly Spending</h3>
-        <BarTrend data={monthly} color={PALETTE[1]} />
+        <BarTrend data={monthly} color={PALETTE[3]} />
       </div>
       <div className="surface p-5">
         <h3 className="mb-3 text-base font-bold text-ink">Category-wise Spending</h3>

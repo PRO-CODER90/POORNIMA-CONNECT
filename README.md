@@ -53,3 +53,37 @@ Create the first admin (they set their password from the setup email on first si
 INSERT INTO users (role, enrollment_no, name, email) VALUES ('admin', 'ADMIN1', 'Canteen Admin', 'you@example.com');
 ```
 
+
+## Sign-in protection
+
+- **3 wrong passwords** for one login ID from one IP lock that ID+IP for 5 minutes, then 15, 30 and 60
+  minutes on repeat lockouts (escalation resets after 24 h without failures). One login ID across all
+  IPs is capped at 10 failures / 30 min, one IP across all IDs at 60 / 15 min. Unknown IDs are counted
+  exactly like real ones. Google sign-in and "Forgot password" stay available during a lockout.
+- Counters live in Postgres (`login_attempts`, created by `npm run db:setup`), so every server
+  instance shares them. If the database can't be reached, sign-in is refused (fails closed).
+- Every outcome is written to `login_events` and the last 50 show in Admin → Audit Logs.
+- To clear a lock by hand: `DELETE FROM login_attempts WHERE key LIKE '%:20070' OR key = 'id:20070';`
+
+### "Continue with Google" checklist
+
+1. Google Cloud Console → Credentials: client type **Web application**.
+2. **Authorised JavaScript origins** list every origin exactly (e.g. `http://localhost:3000`,
+   `https://poornima-connect.vercel.app`), no path, no trailing slash.
+3. OAuth consent screen: **Internal** (Workspace) or **Published**; in *Testing* only listed test users can sign in.
+4. Set **both** `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_ID` to the same value (the server
+   falls back to the public one and logs a warning if they differ). `NEXT_PUBLIC_*` is inlined at
+   build time: **redeploy** after changing it.
+5. `APP_URL` equals the production origin.
+6. Google sign-in only works for emails already in the `users` table; staff/admin rows must carry the
+   exact `@poornima.edu.in` address they sign in with.
+7. Server logs show the real reason for a rejected token (`ERR_JWT_EXPIRED`,
+   `ERR_JWT_CLAIM_VALIDATION_FAILED` = wrong client ID, `ERR_JWKS_TIMEOUT`, …).
+
+## Resetting student/faculty order data
+
+`npm run db:reset:students` prints how many orders, items, payments and student notifications would be
+deleted, and deletes nothing. Add `--confirm` to delete (one transaction), `--student <code>`
+(repeatable) to limit it to some students, `--include-audit` to also drop Order/Payment audit rows.
+Accounts, profiles, cafes and menus are never touched. With `NODE_ENV=production` it also needs
+`--i-know-this-is-production`. Back up first: `pg_dump "$DATABASE_URL" > backup-$(date +%F).sql`.

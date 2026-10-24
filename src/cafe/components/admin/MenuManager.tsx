@@ -167,7 +167,7 @@ export default function MenuManager({ cafes, initialCafeId, initialItems, initia
         ) : (
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">Item</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3 text-right">Price</th>
@@ -178,7 +178,7 @@ export default function MenuManager({ cafes, initialCafeId, initialItems, initia
             </thead>
             <tbody>
               {items.map((i) => (
-                <tr key={i.id} className={`border-b border-slate-50 hover:bg-slate-50/60 ${!i.isActive ? 'opacity-50' : ''}`}>
+                <tr key={i.id} className={`border-b border-slate-50 hover:bg-pu-50/60 ${!i.isActive ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="text-xl" aria-hidden>{i.emoji}</span>

@@ -5,11 +5,13 @@ import NotificationBell from '@/cafe/components/NotificationBell';
 import BrandMark from './BrandMark';
 import UserChip from './UserChip';
 
-export default function StudentTopBar({
+export default function TopBar({
   title,
   subtitle,
   userName,
   userMeta,
+  homeHref = '/student/dashboard',
+  profileHref,
   onLogout,
   loggingOut,
 }: {
@@ -17,6 +19,8 @@ export default function StudentTopBar({
   subtitle?: string;
   userName: string;
   userMeta?: string;
+  homeHref?: string;
+  profileHref?: string;
   onLogout: () => void;
   loggingOut: boolean;
 }) {
@@ -24,7 +28,7 @@ export default function StudentTopBar({
     <header className="sticky top-0 z-30 border-b border-white/60 bg-canvas/75 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-4 px-4 py-3 sm:px-8 lg:px-12">
         <Link
-          href="/student/dashboard"
+          href={homeHref}
           className="flex shrink-0 items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pu-500"
         >
           <BrandMark />
@@ -45,7 +49,7 @@ export default function StudentTopBar({
 
         <div className="flex items-center gap-2.5">
           <NotificationBell variant="student" />
-          <UserChip userName={userName} userMeta={userMeta} onLogout={onLogout} loggingOut={loggingOut} />
+          <UserChip userName={userName} userMeta={userMeta} profileHref={profileHref} onLogout={onLogout} loggingOut={loggingOut} />
         </div>
       </div>
     </header>

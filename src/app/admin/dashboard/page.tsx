@@ -46,15 +46,15 @@ export default async function AdminDashboardPage() {
                 <OpenBadge status={c.status} />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-xl bg-slate-50 p-2">
+                <div className="rounded-xl bg-pu-50/60 p-2">
                   <div className="text-base font-black">{c.today.orders}</div>
                   <div className="text-[10px] font-bold uppercase text-slate-400">Orders</div>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-2">
+                <div className="rounded-xl bg-pu-50/60 p-2">
                   <div className="text-base font-black">{inr(c.today.revenue)}</div>
                   <div className="text-[10px] font-bold uppercase text-slate-400">Revenue</div>
                 </div>
-                <div className="rounded-xl bg-slate-50 p-2">
+                <div className="rounded-xl bg-pu-50/60 p-2">
                   <div className={`text-base font-black ${c.today.pending > 0 ? 'text-rose-600' : ''}`}>{inr(c.today.pending)}</div>
                   <div className="text-[10px] font-bold uppercase text-slate-400">Pending</div>
                 </div>

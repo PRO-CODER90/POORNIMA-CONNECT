@@ -2,21 +2,36 @@ import { ERRORS, type ErrorCode } from "@/lib/errors";
 
 const NO_STORE = { "Cache-Control": "no-store" };
 
-export function fail(code: ErrorCode, extra: Record<string, unknown> = {}) {
+export function fail(code: ErrorCode, extra: Record<string, unknown> = {}, headers: Record<string, string> = {}) {
   const { status, message } = ERRORS[code];
-  return Response.json({ success: false, code, message, ...extra }, { status, headers: NO_STORE });
+  return Response.json({ success: false, code, message, ...extra }, { status, headers: { ...NO_STORE, ...headers } });
 }
 
 export function ok(body: Record<string, unknown> = {}) {
   return Response.json({ success: true, ...body }, { headers: NO_STORE });
 }
 
+/**
+ * Only the platform's own headers are trusted: a client can put anything in x-forwarded-for unless a
+ * proxy overwrites it, which would let an attacker pick a fresh "IP" per guess. Behind a proxy that
+ * sets neither header every request shares the "unknown" bucket (safe, just stricter).
+ */
 export function clientIp(req: Request) {
-  return req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  return req.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim() || req.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+const MAX_BODY = 4096;
+
+/** Parses a small JSON body; anything over 4 KB is treated as empty without being parsed. */
 export async function readJson(req: Request): Promise<Record<string, unknown>> {
-  const body = await req.json().catch(() => null);
+  const declared = Number(req.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY) return {};
+  const text = await req.text().catch(() => "");
+  if (text.length > MAX_BODY) return {};
+  let body: unknown = null;
+  try {
+    body = JSON.parse(text);
+  } catch {}
   return body && typeof body === "object" ? (body as Record<string, unknown>) : {};
 }
 

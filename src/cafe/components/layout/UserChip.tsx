@@ -15,11 +15,14 @@ export function initials(name: string) {
 export default function UserChip({
   userName,
   userMeta,
+  profileHref,
   onLogout,
   loggingOut,
 }: {
   userName: string;
   userMeta?: string;
+  /** Profile page for this role; omit to hide the menu entry. */
+  profileHref?: string;
   onLogout: () => void;
   loggingOut: boolean;
 }) {
@@ -81,8 +84,9 @@ export default function UserChip({
             </div>
             {userMeta ? <div className="truncate text-xs text-muted">{userMeta}</div> : null}
           </div>
+          {profileHref ? (
           <Link
-            href="/student/profile"
+            href={profileHref}
             role="menuitem"
             onClick={() => setOpen(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink hover:bg-pu-50 focus-visible:bg-pu-50 focus-visible:outline-none"
@@ -90,6 +94,7 @@ export default function UserChip({
             <UserCircle size={16} className="text-pu-600" aria-hidden />
             Profile
           </Link>
+          ) : null}
           <button
             type="button"
             role="menuitem"

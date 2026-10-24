@@ -56,7 +56,7 @@ export default async function AdminCafeDetailPage({ params }: { params: Promise<
             ) : (
               <div className="space-y-2">
                 {d.popularItems.map((it, i) => (
-                  <div key={it.name} className="flex items-center gap-3 rounded-xl bg-slate-50/70 px-3 py-2">
+                  <div key={it.name} className="flex items-center gap-3 rounded-xl bg-pu-50/60 px-3 py-2">
                     <span className="w-5 text-center text-xs font-black text-slate-400">{i + 1}</span>
                     <span className="text-xl" aria-hidden>{it.emoji}</span>
                     <span className="flex-1 truncate text-sm font-bold text-slate-800">{it.name}</span>

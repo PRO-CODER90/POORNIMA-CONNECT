@@ -42,7 +42,7 @@ export default function StudentSearch({ initial }: { initial: StudentRow[] }) {
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                 <th className="px-4 py-3">Student ID</th>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Course</th>
@@ -56,7 +56,7 @@ export default function StudentSearch({ initial }: { initial: StudentRow[] }) {
             </thead>
             <tbody>
               {filtered.map((s) => (
-                <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/60">
+                <tr key={s.id} className="border-b border-slate-50 hover:bg-pu-50/60">
                   <td className="px-4 py-3 font-mono text-xs font-bold text-slate-800">{s.studentCode}</td>
                   <td className="px-4 py-3">
                     <div className="font-bold text-slate-800">{s.name}</div>

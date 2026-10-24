@@ -75,12 +75,12 @@ export default function NotificationBell({ variant = 'default' }: { variant?: 'd
       ) : (
         <button
           onClick={() => setOpen((o) => !o)}
-          className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-200/60 hover:text-navy transition-colors"
+          className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-200/60 hover:text-ink transition-colors"
           aria-label={`Notifications${unread ? ` (${unread} unread)` : ''}`}
         >
           <Bell size={18} />
           {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber px-1 font-mono text-[9px] font-bold text-white shadow-sm">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 font-mono text-[9px] font-bold text-white shadow-sm">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
@@ -89,11 +89,11 @@ export default function NotificationBell({ variant = 'default' }: { variant?: 'd
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200/90 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-            <span className="text-xs font-bold text-navy">Notifications</span>
+            <span className="text-xs font-bold text-ink">Notifications</span>
             {unread > 0 && (
               <button
                 onClick={markAll}
-                className={`text-[11px] font-semibold hover:underline ${variant === 'student' ? 'text-pu-600' : 'text-amber'}`}
+                className={`text-[11px] font-semibold hover:underline ${variant === 'student' ? 'text-pu-600' : 'text-amber-600'}`}
               >
                 Mark all as read
               </button>
@@ -104,9 +104,9 @@ export default function NotificationBell({ variant = 'default' }: { variant?: 'd
               <div className="px-4 py-8 text-center text-xs text-slate-400">No notifications yet</div>
             ) : (
               items.map((n) => (
-                <div key={n.id} className={`border-b border-slate-50 px-4 py-3 ${n.isRead ? '' : 'bg-warm-50/70'}`}>
+                <div key={n.id} className={`border-b border-slate-50 px-4 py-3 ${n.isRead ? '' : 'bg-pu-50/60'}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <div className="text-xs font-semibold text-navy">{n.title}</div>
+                    <div className="text-xs font-semibold text-ink">{n.title}</div>
                     <span className="shrink-0 text-[10px] text-slate-400">{timeAgo(n.createdAt)}</span>
                   </div>
                   <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{n.message}</p>

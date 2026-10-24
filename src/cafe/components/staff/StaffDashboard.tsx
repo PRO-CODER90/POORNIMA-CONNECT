@@ -165,7 +165,7 @@ export default function StaffDashboard() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`shrink-0 rounded-xl px-4 py-2.5 text-xs font-black tracking-wide ${
-              tab === t.id ? 'bg-slate-900 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+              tab === t.id ? 'bg-pu-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300'
             }`}
             aria-pressed={tab === t.id}
           >
@@ -224,7 +224,7 @@ export default function StaffDashboard() {
       <Modal open={!!cashOrder} onClose={() => !confirmingCash && setCashOrder(null)} title="Confirm cash receipt">
         {cashOrder && (
           <div>
-            <div className="rounded-2xl bg-slate-50 p-4 text-sm">
+            <div className="rounded-2xl bg-pu-50/60 p-4 text-sm">
               <div className="flex justify-between"><span className="text-slate-500">Order</span><span className="font-mono text-xs font-bold">{cashOrder.orderNumber}</span></div>
               <div className="mt-1 flex justify-between"><span className="text-slate-500">Student</span><span className="font-semibold">{cashOrder.student?.name} ({cashOrder.student?.studentCode})</span></div>
               <div className="mt-1 flex justify-between"><span className="text-slate-500">Amount</span><span className="text-lg font-black text-slate-900">{inr(cashOrder.totalAmount)}</span></div>
@@ -275,10 +275,10 @@ function OrderActions({
         </div>
       </div>
       <div className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
-        <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Student</span><div className="font-bold">{order.student?.name}</div></div>
-        <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Student ID</span><div className="font-mono text-xs font-bold">{order.student?.studentCode}</div></div>
-        <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Order time</span><div className="font-bold">{fmtTime(order.createdAt)}</div></div>
-        <div className="rounded-xl bg-slate-50 px-3 py-2"><span className="text-xs text-slate-400">Payment method</span><div className="font-bold">💵 CASH</div></div>
+        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student</span><div className="font-bold">{order.student?.name}</div></div>
+        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student ID</span><div className="font-mono text-xs font-bold">{order.student?.studentCode}</div></div>
+        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Order time</span><div className="font-bold">{fmtTime(order.createdAt)}</div></div>
+        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Payment method</span><div className="font-bold">💵 CASH</div></div>
       </div>
 
       <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-100">
@@ -318,7 +318,7 @@ function OrderActions({
             {busyAction === next.action ? <Spinner /> : next.icon} {next.label}
           </button>
         ) : (
-          <div className="flex items-center justify-center rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold text-slate-400">
+          <div className="flex items-center justify-center rounded-xl bg-pu-50/60 px-4 py-3 text-xs font-bold text-slate-400">
             {s === 'COMPLETED' ? '✓ Order completed' : 'No further actions'}
           </div>
         )}
