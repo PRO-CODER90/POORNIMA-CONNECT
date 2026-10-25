@@ -16,13 +16,18 @@ import {
   type OrderStatus,
 } from '@/cafe/lib/orders';
 import { inr } from '@/cafe/lib/money';
+import { canOrder, demoImageFor } from '@/cafe/lib/stock';
+import { cancelAndRestock, deductStock, StockError, type Q, type StockChange } from '@/cafe/lib/stockSql';
+
+/** Runs stock SQL inside a Prisma transaction. */
+export const prismaQ = (tx: Prisma.TransactionClient): Q => (text, params) => tx.$queryRawUnsafe(text, ...params);
 
 // ─────────────────────────────── shared shapes ───────────────────────────────
 
 export interface OrderItemDto {
   id: string;
   name: string;
-  emoji: string;
+  imageUrl: string | null;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -66,7 +71,7 @@ export function toOrderDto(o: {
   paidAt: Date | null;
   cafe: { id: string; code: string; name: string };
   student?: { name: string; studentCode: string } | null;
-  items: Array<{ id: string; menuItemId: string; itemName: string; emoji: string; quantity: number; unitPrice: number; subtotal: number }>;
+  items: Array<{ id: string; menuItemId: string; itemName: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }>;
   paidByStaff?: { name: string } | null;
 }): OrderDto {
   return {
@@ -77,7 +82,7 @@ export function toOrderDto(o: {
     items: o.items.map((i) => ({
       id: i.id,
       name: i.itemName,
-      emoji: i.emoji,
+      imageUrl: i.imageUrl,
       quantity: i.quantity,
       unitPrice: i.unitPrice,
       subtotal: i.subtotal,
@@ -101,7 +106,7 @@ export function toOrderDto(o: {
 export const orderInclude = {
   cafe: { select: { id: true, code: true, name: true, coverEmoji: true } },
   student: { select: { name: true, studentCode: true } },
-  items: { select: { id: true, menuItemId: true, itemName: true, emoji: true, quantity: true, unitPrice: true, subtotal: true } },
+  items: { select: { id: true, menuItemId: true, itemName: true, imageUrl: true, quantity: true, unitPrice: true, subtotal: true } },
   paidByStaff: { select: { name: true } },
 } satisfies Prisma.OrderInclude;
 
@@ -123,11 +128,12 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
   if (lines.length === 0) throw badRequest('Your cart is empty.');
 
   for (let attempt = 0; attempt < 3; attempt++) {
+    let stockChanges: StockChange[] = [];
     try {
       const dto = await prisma.$transaction(async (tx) => {
         const menuItems = await tx.menuItem.findMany({
           where: { id: { in: lines.map((l) => l.menuItemId) }, isActive: true },
-          include: { cafe: { select: { id: true, code: true, name: true, openingTime: true, closingTime: true, manualStatus: true, isActive: true } } },
+          include: { category: { select: { name: true } }, cafe: { select: { id: true, code: true, name: true, openingTime: true, closingTime: true, manualStatus: true, isActive: true } } },
         });
         if (menuItems.length !== new Set(lines.map((l) => l.menuItemId)).size) {
           throw badRequest('One or more items no longer exist.');
@@ -142,7 +148,7 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
         }
 
         for (const m of menuItems) {
-          if (!m.isAvailable) throw conflict(`${m.name} is currently unavailable.`);
+          if (!canOrder(m)) throw conflict(m.isAvailable ? `${m.name} just sold out.` : `${m.name} is currently unavailable.`);
         }
 
         const calc = calcTotals(
@@ -181,7 +187,7 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
                 return {
                   menuItemId: m.id,
                   itemName: m.name,
-                  emoji: m.emoji,
+                  imageUrl: m.imageUrl || demoImageFor(m.category.name, m.itemType),
                   quantity: l.qty,
                   unitPrice: l.price,
                   subtotal: l.subtotal,
@@ -191,6 +197,15 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
           },
           include: orderInclude,
         });
+
+        // Same transaction as the order: a short packet line rolls the whole order back.
+        const packets = menuItems.filter((m) => m.itemType === 'PACKET').map((m) => ({ menuItemId: m.id, quantity: lines.find((l) => l.menuItemId === m.id)!.quantity }));
+        try {
+          stockChanges = await deductStock(prismaQ(tx), cafe.id, order.id, packets);
+        } catch (e) {
+          if (e instanceof StockError) throw conflict(e.message);
+          throw e;
+        }
 
         await tx.auditLog.create({
           data: {
@@ -212,6 +227,7 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
       '🔔 NEW ORDER',
       `New order ${dto.orderNumber} from ${dto.student?.name ?? 'a student'} (${dto.student?.studentCode ?? '—'}) — ${dto.itemCount} item(s), ${inr(dto.totalAmount)} CASH (pending).`,
     );
+    await notifyStockCrossings(dto.cafe.id, stockChanges);
     return dto;
     } catch (e) {
       // Retry on order-number collision (two orders racing in the same second).
@@ -294,11 +310,11 @@ export async function cancelOrder(orderId: string, reason: string | undefined, a
     if (!staffMayCancel(os)) throw forbidden('This order is already completed.');
   }
 
-  const updated = await prisma.order.update({
-    where: { id: orderId },
-    data: { orderStatus: 'CANCELLED', cancelReason: reason ?? (actor.kind === 'student' ? 'Cancelled by student' : 'Cancelled by staff/admin') },
-    include: orderInclude,
-  });
+  const cancelReason = reason ?? (actor.kind === 'student' ? 'Cancelled by student' : 'Cancelled by staff/admin');
+  // The guarded status change and the restock commit together, so stock comes back exactly once.
+  const done = await prisma.$transaction((tx) => cancelAndRestock(prismaQ(tx), orderId, cancelReason));
+  if (!done) throw conflict('This order was already cancelled or completed.');
+  const updated = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: orderInclude });
   await audit(actor.kind === 'student' ? actor.ctx.session.id : actor.kind === 'staff' ? actor.ctx.staff.userId : actor.ctx.session.id, 'ORDER_CANCELLED', 'Order', orderId, { reason: updated.cancelReason });
   if (actor.kind === 'student') {
     await notifyStudentUpdate(orderId, 'Order cancelled', `Your order ${updated.orderNumber} was cancelled. ${updated.cancelReason ?? ''}`.trim());
@@ -380,4 +396,12 @@ export async function markCashReceived(staff: AuthedStaff, orderId: string) {
   await audit(staff.staff.userId, 'CASH_RECEIVED', 'Order', orderId, { amount: order.totalAmount });
   await notifyStudentUpdate(orderId, '🟢 Cash payment confirmed', `Payment of ${inr(order.totalAmount)} for order ${order.orderNumber} has been confirmed. Thank you!`, 'PAYMENT');
   return toOrderDto(updated);
+}
+
+/** Tells cafe staff when a sale takes a packet to its low-stock level or sells it out (only on the crossing). */
+async function notifyStockCrossings(cafeId: string, changes: StockChange[]) {
+  for (const c of changes) {
+    if (c.after === 0) await notifyCafeStaff(cafeId, 'Out of stock', `${c.name} just sold out. Restock it in Inventory.`);
+    else if (c.before > c.threshold && c.after <= c.threshold) await notifyCafeStaff(cafeId, 'Low stock', `${c.name}: only ${c.after} left.`);
+  }
 }

@@ -6,13 +6,14 @@ import { fmtDateTime } from '@/cafe/lib/dates';
 import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { EmptyState, ErrorNote, Modal, Skeleton } from '@/cafe/components/ui';
 import { usePolling } from '@/cafe/hooks/usePolling';
+import { ProductThumb } from '@/cafe/components/ProductImage';
 
 export interface AdminOrderRow {
   id: string;
   orderNumber: string;
   cafe: { id: string; code: string; name: string };
   student: { name: string; studentCode: string } | null;
-  items: { id: string; name: string; emoji: string; quantity: number; unitPrice: number; subtotal: number }[];
+  items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   paymentStatus: string;
   orderStatus: string;
@@ -191,7 +192,7 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
             <div className="divide-y divide-slate-100 rounded-xl border border-slate-100">
               {detail.items.map((i) => (
                 <div key={i.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-                  <span className="text-xl" aria-hidden>{i.emoji}</span>
+                  <ProductThumb src={i.imageUrl} name={i.name} className="h-9 w-9" />
                   <div className="flex-1 font-semibold">{i.name}</div>
                   <div className="text-xs text-slate-400">{i.quantity} × {inr(i.unitPrice)}</div>
                   <div className="w-16 text-right font-bold">{inr(i.subtotal)}</div>

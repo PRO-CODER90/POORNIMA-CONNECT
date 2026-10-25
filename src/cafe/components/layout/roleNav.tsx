@@ -18,6 +18,7 @@ import {
   FileText,
   ScrollText,
   Settings,
+  Package,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -94,10 +95,12 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
     roleLabel: 'Cafe Staff',
     nav: [
       { href: '/staff/dashboard', label: 'Counter', icon: ClipboardList, match: (p) => p === '/staff/dashboard' || p === '/staff' },
+      { href: '/staff/inventory', label: 'Inventory', icon: Package },
       { href: '/staff/history', label: 'History', icon: History },
     ],
     mobileNav: [
       { href: '/staff/dashboard', label: 'Counter', icon: ClipboardList },
+      { href: '/staff/inventory', label: 'Inventory', icon: Package },
       { href: '/staff/history', label: 'History', icon: History },
     ],
   },

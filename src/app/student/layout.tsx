@@ -3,6 +3,10 @@ import RoleShell from '@/cafe/components/layout/RoleShell';
 import { CartProvider } from '@/cafe/components/cart/CartContext';
 import CartDrawer from '@/cafe/components/cart/CartDrawer';
 import CartFab from '@/cafe/components/cart/CartFab';
+import type { Metadata } from 'next';
+
+// Signed-in area: never indexed (the X-Robots-Tag header in next.config.ts says the same).
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = 'force-dynamic';
 

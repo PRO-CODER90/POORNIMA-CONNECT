@@ -3,6 +3,9 @@ import { adminPayments } from '@/cafe/server/admin/payments';
 import { inr } from '@/cafe/lib/money';
 import { fmtDateTime } from '@/cafe/lib/dates';
 import { EmptyState, Badge } from '@/cafe/components/ui';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Payments' };
 
 export const dynamic = 'force-dynamic';
 

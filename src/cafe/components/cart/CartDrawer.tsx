@@ -1,21 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, X, ShoppingCart, Banknote } from 'lucide-react';
+import { Minus, Plus, Trash2, X, ShoppingCart, Banknote, Store } from 'lucide-react';
 import { useCart } from './CartContext';
 import { Spinner, ErrorNote, EmptyState } from '@/cafe/components/ui';
 import { inr } from '@/cafe/lib/money';
 import type { OrderDto } from '@/cafe/server/orders';
+import { ProductThumb } from '@/cafe/components/ProductImage';
 
 export default function CartDrawer() {
   const cart = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<OrderDto | null>(null);
+  const { drawerOpen, refreshStock } = cart;
+
+  // Re-check stock whenever the drawer opens: the saved cart is never trusted for quantities.
+  useEffect(() => {
+    if (drawerOpen) refreshStock();
+  }, [drawerOpen, refreshStock]);
+
+  const soldOut = (id: string) => cart.stock[id]?.available === false;
+  const blocked = cart.items.some((i) => soldOut(i.menuItemId));
 
   const placeOrder = async () => {
-    if (busy || cart.items.length === 0) return;
+    if (busy || cart.items.length === 0 || blocked) return;
     setBusy(true);
     setError(null);
     try {
@@ -29,6 +39,7 @@ export default function CartDrawer() {
       const data = await r.json();
       if (!r.ok) {
         setError(data.error ?? 'Could not place your order. Please try again.');
+        refreshStock(); // e.g. "Only 2 left of Potato Chips." — fetch the new numbers and clamp the cart
         return;
       }
       setPlaced(data.order as OrderDto);
@@ -169,25 +180,27 @@ export default function CartDrawer() {
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-ink">
-                    <span className="text-sm">{cart.items[0].emoji}</span>
+                    <Store size={14} className="text-pu-600" aria-hidden />
                     <span className="truncate">{cart.items[0].cafeName}</span>
                   </div>
 
                   <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/90 bg-white">
                     {cart.items.map((i) => (
-                      <div key={i.menuItemId} className="flex items-center gap-3 p-3">
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-pu-50/60 text-lg"
-                          aria-hidden
-                        >
-                          {i.emoji}
-                        </div>
+                      <div key={i.menuItemId} className={`flex items-center gap-3 p-3 ${soldOut(i.menuItemId) ? 'bg-rose-50/60' : ''}`}>
+                        <ProductThumb src={i.imageUrl} name={i.name} />
 
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-xs font-semibold text-ink">{i.name}</div>
-                          <div className="font-mono text-[11px] text-slate-400">
-                            {inr(i.price)} × {i.quantity}
-                          </div>
+                          {soldOut(i.menuItemId) ? (
+                            <div className="text-[11px] font-semibold text-rose-700">No longer available — remove it to order</div>
+                          ) : (
+                            <div className="font-mono text-[11px] text-slate-400">
+                              {inr(i.price)} × {i.quantity}
+                              {i.quantity >= cart.maxFor(i.menuItemId) && cart.maxFor(i.menuItemId) < 99 ? (
+                                <span className="ml-1.5 font-sans font-semibold text-amber-700">Only {cart.maxFor(i.menuItemId)} available</span>
+                              ) : null}
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1.5">
@@ -203,7 +216,8 @@ export default function CartDrawer() {
                           </span>
                           <button
                             onClick={() => cart.setQty(i.menuItemId, i.quantity + 1)}
-                            className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                            disabled={i.quantity >= cart.maxFor(i.menuItemId)}
+                            className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
                             aria-label={`Increase ${i.name}`}
                           >
                             <Plus size={12} />
@@ -251,7 +265,7 @@ export default function CartDrawer() {
 
                 <button
                   onClick={placeOrder}
-                  disabled={busy || cart.items.length === 0}
+                  disabled={busy || cart.items.length === 0 || blocked}
                   className="btn-solid-pu w-full py-3 uppercase tracking-wider"
                 >
                   {busy ? (

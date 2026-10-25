@@ -276,3 +276,39 @@ DO $$ BEGIN ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey"
 -- AddForeignKey
 DO $$ BEGIN ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+
+-- ─── Inventory: packet stock, product images (idempotent) ───
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "itemType" TEXT NOT NULL DEFAULT 'PREPARED';
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "isVeg" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "packSize" TEXT;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "mrp" INTEGER;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "sku" TEXT;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "stockQty" INTEGER;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "lowStockThreshold" INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE "MenuItem" ADD COLUMN IF NOT EXISTS "expiryDate" TIMESTAMP(3);
+ALTER TABLE "OrderItem" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
+
+-- Safety net: stock never goes negative, and only packets carry stock.
+ALTER TABLE "MenuItem" DROP CONSTRAINT IF EXISTS "menuitem_stock_chk";
+ALTER TABLE "MenuItem" ADD CONSTRAINT "menuitem_stock_chk" CHECK (
+  ("itemType" = 'PREPARED' AND "stockQty" IS NULL) OR
+  ("itemType" = 'PACKET' AND "stockQty" IS NOT NULL AND "stockQty" >= 0));
+ALTER TABLE "MenuItem" DROP CONSTRAINT IF EXISTS "menuitem_type_chk";
+ALTER TABLE "MenuItem" ADD CONSTRAINT "menuitem_type_chk" CHECK ("itemType" IN ('PREPARED','PACKET'));
+
+CREATE UNIQUE INDEX IF NOT EXISTS "MenuItem_cafeId_sku_key" ON "MenuItem" ("cafeId", "sku");
+CREATE INDEX IF NOT EXISTS "MenuItem_cafeId_itemType_stockQty_idx" ON "MenuItem" ("cafeId", "itemType", "stockQty");
+
+CREATE TABLE IF NOT EXISTS "StockMovement" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "menuItemId" TEXT NOT NULL REFERENCES "MenuItem"("id") ON UPDATE CASCADE ON DELETE RESTRICT,
+  "cafeId" TEXT NOT NULL,
+  "delta" INTEGER NOT NULL,
+  "qtyAfter" INTEGER NOT NULL,
+  "reason" TEXT NOT NULL,
+  "orderId" TEXT,
+  "actorUserId" TEXT,
+  "note" TEXT NOT NULL DEFAULT '',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX IF NOT EXISTS "StockMovement_menuItemId_createdAt_idx" ON "StockMovement" ("menuItemId", "createdAt");
+CREATE INDEX IF NOT EXISTS "StockMovement_cafeId_createdAt_idx" ON "StockMovement" ("cafeId", "createdAt");

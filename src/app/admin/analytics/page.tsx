@@ -4,6 +4,9 @@ import { inr } from '@/cafe/lib/money';
 import { StatCard } from '@/cafe/components/ui';
 import { fmtDate } from '@/cafe/lib/dates';
 import AnalyticsCharts from '@/cafe/components/admin/AnalyticsCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Revenue Analytics' };
 
 export const dynamic = 'force-dynamic';
 
@@ -72,7 +75,7 @@ export default async function AdminAnalyticsPage() {
           <tbody>
             {d.byItem.slice(0, 15).map((i) => (
               <tr key={i.name} className="border-b border-slate-50">
-                <td className="px-4 py-2.5 font-semibold">{i.emoji} {i.name}</td>
+                <td className="px-4 py-2.5 font-semibold">{i.name}</td>
                 <td className="px-4 py-2.5 text-right font-semibold">{i.quantity}</td>
                 <td className="px-4 py-2.5 text-right font-black">{inr(i.revenue)}</td>
               </tr>

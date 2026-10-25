@@ -1,4 +1,7 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { oneLine } from "@/lib/contact-schema";
+
+export { oneLine };
 
 export type MailKind = "reset" | "setup" | "changed" | "temp";
 
@@ -175,6 +178,41 @@ export async function sendEmail(to: string, kind: MailKind, data: MailData): Pro
     html: content.html,
     text: content.text,
   });
+}
+
+export interface ContactMail {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  reference: string;
+}
+
+
+/**
+ * Contact-form message to the support inbox. Sent FROM our own address (the visitor's would fail
+ * SPF/DKIM) with Reply-To set to the visitor, built from nodemailer's fields (no header strings).
+ */
+export function contactMail(to: string, from: string, m: ContactMail) {
+  const name = oneLine(m.name);
+  const subject = oneLine(m.subject);
+  const html =
+    `<p><b>New message from the PU CafeConnect contact form</b> (${esc(m.reference)})</p>` +
+    `<table style="border-collapse:collapse;font-size:14px">` +
+    `<tr><td style="padding:4px 14px 4px 0;color:#555">Name</td><td>${esc(name)}</td></tr>` +
+    `<tr><td style="padding:4px 14px 4px 0;color:#555">Email</td><td>${esc(m.email)}</td></tr>` +
+    `<tr><td style="padding:4px 14px 4px 0;color:#555">Subject</td><td>${esc(subject)}</td></tr></table>` +
+    `<p style="white-space:pre-wrap">${esc(m.message)}</p>` +
+    `<p style="color:#666;font-size:12px">Reply to this email to answer the sender.</p>`;
+  const text = `New message from the PU CafeConnect contact form (${m.reference})\n\nName: ${name}\nEmail: ${m.email}\nSubject: ${subject}\n\n${m.message}`;
+  return { from, to, replyTo: { name, address: m.email }, subject: `[Contact] ${subject} (${m.reference})`, html, text };
+}
+
+export async function sendContactEmail(m: ContactMail): Promise<void> {
+  const config = getEmailConfig();
+  if (!config.isConfigured) throw new Error(`SMTP is not configured (missing ${config.missing.join(", ")})`);
+  const to = process.env.CONTACT_TO?.trim() || process.env.ADMIN_EMAIL?.trim() || "support@poornima.edu.in";
+  await getTransporter().sendMail(contactMail(to, config.from, m));
 }
 
 /** Sends an optional operational recovery-request notification to ADMIN_EMAIL, if configured. */

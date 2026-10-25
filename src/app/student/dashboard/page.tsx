@@ -9,6 +9,9 @@ import { inr } from '@/cafe/lib/money';
 import { timeAgo } from '@/cafe/lib/dates';
 import Link from 'next/link';
 import { Coffee, ShoppingBag, ShoppingCart, ClipboardList, TrendingUp, Wallet, ArrowRight, ChevronRight } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Dashboard' };
 
 export const dynamic = 'force-dynamic';
 

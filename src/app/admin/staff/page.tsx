@@ -2,6 +2,9 @@ import { requireAdminPage } from '@/cafe/lib/rbac';
 import { adminStaffList } from '@/cafe/server/admin/staff';
 import { prisma } from '@/cafe/lib/db';
 import StaffManager from '@/cafe/components/admin/StaffManager';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Cafe Staff' };
 
 export const dynamic = 'force-dynamic';
 

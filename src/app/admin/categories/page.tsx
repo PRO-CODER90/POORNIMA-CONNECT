@@ -1,6 +1,9 @@
 import { requireAdminPage } from '@/cafe/lib/rbac';
 import { prisma } from '@/cafe/lib/db';
 import CategoryManager from '@/cafe/components/admin/CategoryManager';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Categories' };
 
 export const dynamic = 'force-dynamic';
 

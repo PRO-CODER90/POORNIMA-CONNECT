@@ -23,7 +23,8 @@ export type AuditAction =
   | 'STAFF_UPDATED'
   | 'STAFF_DEACTIVATED'
   | 'STAFF_PASSWORD_RESET'
-  | 'STUDENT_UPDATED';
+  | 'STUDENT_UPDATED'
+  | 'STOCK_ADJUSTED';
 
 /** Fire-and-forget audit log entry (spec §62). */
 export async function audit(

@@ -35,14 +35,18 @@ function recent(key: string, windowS: number) {
   return list;
 }
 
-export async function isLimited(keys: string[], { max, windowS }: Limit = LOGIN_LIMIT): Promise<boolean> {
+export const CONTACT_IP_LIMIT: Limit = { max: 3, windowS: 3600 }; // 3 contact messages / hour per IP
+export const CONTACT_EMAIL_LIMIT: Limit = { max: 5, windowS: 86400 }; // 5 / day per sender email
+
+/** `failClosed`: treat an unreachable store as "limited" (for abuse-prone public forms). */
+export async function isLimited(keys: string[], { max, windowS }: Limit = LOGIN_LIMIT, { failClosed = false } = {}): Promise<boolean> {
   if (!URL_ || !TOKEN) return keys.some((k) => recent(k, windowS).length >= max);
   try {
     const out = await redis(keys.map((k) => ["GET", `rl:${k}`]));
     return out.some((r) => Number(r.result ?? 0) >= max);
   } catch (e) {
-    console.error("rate limit store unavailable (failing open)", e);
-    return false;
+    console.error(`rate limit store unavailable (failing ${failClosed ? "closed" : "open"})`, e);
+    return failClosed;
   }
 }
 

@@ -271,6 +271,11 @@ export default function LoginCard({ initialError, initialLink }: Props) {
       )}
 
       <p className="mt-6 text-xs text-slate-600">
+        By signing in you agree to the{" "}
+        <a href="/terms" className="font-medium text-pu-600 underline underline-offset-2">Terms</a> and{" "}
+        <a href="/privacy" className="font-medium text-pu-600 underline underline-offset-2">Privacy Policy</a>.
+      </p>
+      <p className="mt-2 text-xs text-slate-600">
         Need help?{" "}
         <a href="mailto:support@poornima.edu.in" className="font-medium text-pu-600 underline underline-offset-2">
           Contact support

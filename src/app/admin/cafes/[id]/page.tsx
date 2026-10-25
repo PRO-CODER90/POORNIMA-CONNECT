@@ -11,6 +11,9 @@ import { fmtTime12 } from '@/cafe/utils/format';
 import CafeQR from '@/cafe/components/qr/CafeQR';
 import CafeSettingsForm from '@/cafe/components/admin/CafeSettingsForm';
 import AdminCafeCharts from '@/cafe/components/admin/CafeCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Cafe Details' };
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +61,6 @@ export default async function AdminCafeDetailPage({ params }: { params: Promise<
                 {d.popularItems.map((it, i) => (
                   <div key={it.name} className="flex items-center gap-3 rounded-xl bg-pu-50/60 px-3 py-2">
                     <span className="w-5 text-center text-xs font-black text-slate-400">{i + 1}</span>
-                    <span className="text-xl" aria-hidden>{it.emoji}</span>
                     <span className="flex-1 truncate text-sm font-bold text-slate-800">{it.name}</span>
                     <span className="text-xs text-slate-400">{it.quantity} sold</span>
                     <span className="text-sm font-black">{inr(it.revenue)}</span>

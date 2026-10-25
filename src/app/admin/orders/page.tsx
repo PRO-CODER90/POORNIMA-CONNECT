@@ -1,6 +1,9 @@
 import { requireAdminPage } from '@/cafe/lib/rbac';
 import { prisma } from '@/cafe/lib/db';
 import AdminOrdersTable from '@/cafe/components/admin/AdminOrdersTable';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Orders' };
 
 export const dynamic = 'force-dynamic';
 

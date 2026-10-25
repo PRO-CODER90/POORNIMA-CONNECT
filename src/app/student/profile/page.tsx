@@ -2,6 +2,9 @@ import { requireStudentPage } from '@/cafe/lib/rbac';
 import { prisma } from '@/cafe/lib/db';
 import ProfileForm from '@/cafe/components/student/ProfileForm';
 import { PageHeader } from '@/cafe/components/ui';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'My Profile' };
 
 export const dynamic = 'force-dynamic';
 

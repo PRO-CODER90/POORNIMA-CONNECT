@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 
 export class ApiError extends Error {
   status: number;
+  /** Per-field messages for forms, keyed by input name. */
+  fields?: Record<string, string>;
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
@@ -27,7 +29,7 @@ export function handleApi(fn: Handler) {
       return await fn(req, ctx);
     } catch (e) {
       if (e instanceof ApiError) {
-        return NextResponse.json({ error: e.message }, { status: e.status });
+        return NextResponse.json(e.fields ? { error: e.message, fields: e.fields } : { error: e.message }, { status: e.status });
       }
       if (e instanceof SyntaxError) {
         return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });

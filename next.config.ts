@@ -7,11 +7,12 @@ const isDev = process.env.NODE_ENV !== "production";
 // dev additionally needs eval/websockets for hot reload.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com/gsi/client`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com/gsi/client https://www.googletagmanager.com`,
   "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
   "font-src 'self' data:",
   "img-src 'self' data: https:",
-  `connect-src 'self' https://accounts.google.com/gsi/${isDev ? " ws:" : ""}`,
+  // Google Analytics (public pages, after consent only) needs the GA collection hosts.
+  `connect-src 'self' https://accounts.google.com/gsi/ https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com${isDev ? " ws:" : ""}`,
   "frame-src https://accounts.google.com/gsi/",
   "object-src 'none'",
   "frame-ancestors 'none'",
@@ -21,7 +22,28 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    // Product photos uploaded through the inventory screens (Vercel Blob). No wildcards beyond that host.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/menu/**" }],
+  },
   productionBrowserSourceMaps: false,
+  async redirects() {
+    // One canonical host. APP_HOST is a fixed value from the environment, never the request's Host header.
+    const host = process.env.APP_HOST?.trim();
+    return [
+      ...(host
+        ? [{ source: "/:path*", has: [{ type: "host" as const, value: `www.${host}` }], destination: `https://${host}/:path*`, statusCode: 301 as const }]
+        : []),
+      // Old or guessable URLs → real pages (see docs/redirects.md).
+      { source: "/login", destination: "/", statusCode: 301 },
+      { source: "/signin", destination: "/", statusCode: 301 },
+      { source: "/home", destination: "/", statusCode: 301 },
+      { source: "/cafes", destination: "/dining", statusCode: 301 },
+      { source: "/contact-us", destination: "/contact", statusCode: 301 },
+      { source: "/privacy-policy", destination: "/privacy", statusCode: 301 },
+    ];
+  },
   async headers() {
     return [
       {
@@ -38,6 +60,10 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
         ],
       },
+      // Signed-in areas and the API are never indexed, whatever the HTML says.
+      { source: "/(student|staff|admin|cafe|dashboard)/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }] },
+      { source: "/(student|staff|admin|dashboard)", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }] },
+      { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
       // The emailed one-time links land on "/": never cache that page.
       { source: "/", headers: [{ key: "Cache-Control", value: "no-store" }] },
       { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store" }] },

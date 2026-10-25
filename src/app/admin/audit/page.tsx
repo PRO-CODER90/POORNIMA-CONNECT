@@ -3,6 +3,9 @@ import { prisma } from '@/cafe/lib/db';
 import { fmtDateTime } from '@/cafe/lib/dates';
 import { Badge } from '@/cafe/components/ui';
 import AuditFilter from '@/cafe/components/admin/AuditFilter';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Audit Logs' };
 
 export const dynamic = 'force-dynamic';
 

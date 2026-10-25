@@ -64,3 +64,53 @@ INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, pr
 INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, emoji, "imageUrl", "isAvailable", "isActive", "createdAt", "updatedAt") VALUES ('cmvkup981003a7dtfkkyt2wjm', 'cmvkup97e002c7dtf3y29iu9p', 'cmvkup97k002k7dtf1otf1dzt', 'Veg Thali', 'Rice, dal, 2 sabzi, curd, salad', 110, '🍱', NULL, true, true, '2026-10-23 10:52:32.882', '2026-10-23 10:52:32.882') ON CONFLICT DO NOTHING;
 INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, emoji, "imageUrl", "isAvailable", "isActive", "createdAt", "updatedAt") VALUES ('cmvkup983003c7dtf972i8rbp', 'cmvkup97e002c7dtf3y29iu9p', 'cmvkup97l002m7dtf1bejfi6b', 'Ice Cream Cup', '3 scoops of your choice', 45, '🍨', NULL, true, true, '2026-10-23 10:52:32.884', '2026-10-23 10:52:32.884') ON CONFLICT DO NOTHING;
 INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, emoji, "imageUrl", "isAvailable", "isActive", "createdAt", "updatedAt") VALUES ('cmvkup985003e7dtfpvmngn45', 'cmvkup97e002c7dtf3y29iu9p', 'cmvkup97l002m7dtf1bejfi6b', 'Pastry Box', 'Assorted pastry box (4 pcs)', 70, '🥧', NULL, true, true, '2026-10-23 10:52:32.885', '2026-10-23 10:52:32.885') ON CONFLICT DO NOTHING;
+
+-- Demo images for every item that has none (an uploaded photo is never overwritten).
+UPDATE public."MenuItem" m SET "imageUrl" = '/images/menu/demo/' || CASE WHEN m."itemType" = 'PACKET' THEN 'packet' ELSE CASE c.name WHEN 'SNACKS' THEN 'snacks' WHEN 'BEVERAGES' THEN 'beverages' WHEN 'FAST FOOD' THEN 'fast-food' WHEN 'DESSERTS' THEN 'desserts' ELSE 'meals' END END || '.webp'
+  FROM public."Category" c WHERE c.id = m."categoryId" AND (m."imageUrl" IS NULL OR m."imageUrl" = '');
+
+-- Sample packet products (generic names, no brands) so packet stock can be tried out.
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c1-chips', cf.id, ct.id, 'Potato Chips (Classic)', 'Crispy salted potato chips', 20, '/images/menu/demo/packet.webp', 'PACKET', '52 g', 'PKT-CHIPS', 24, 5, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C1' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c1-chips', id, "cafeId", 24, 24, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c1-chips' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c2-chips', cf.id, ct.id, 'Potato Chips (Classic)', 'Crispy salted potato chips', 20, '/images/menu/demo/packet.webp', 'PACKET', '52 g', 'PKT-CHIPS', 24, 5, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C2' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c2-chips', id, "cafeId", 24, 24, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c2-chips' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c3-chips', cf.id, ct.id, 'Potato Chips (Classic)', 'Crispy salted potato chips', 20, '/images/menu/demo/packet.webp', 'PACKET', '52 g', 'PKT-CHIPS', 24, 5, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C3' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c3-chips', id, "cafeId", 24, 24, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c3-chips' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c1-water', cf.id, ct.id, 'Packaged Drinking Water', 'Sealed bottle, chilled', 20, '/images/menu/demo/packet.webp', 'PACKET', '1 L', 'PKT-WATER', 40, 10, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'BEVERAGES' WHERE cf.code = 'C1' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c1-water', id, "cafeId", 40, 40, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c1-water' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c2-water', cf.id, ct.id, 'Packaged Drinking Water', 'Sealed bottle, chilled', 20, '/images/menu/demo/packet.webp', 'PACKET', '1 L', 'PKT-WATER', 40, 10, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'BEVERAGES' WHERE cf.code = 'C2' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c2-water', id, "cafeId", 40, 40, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c2-water' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c3-water', cf.id, ct.id, 'Packaged Drinking Water', 'Sealed bottle, chilled', 20, '/images/menu/demo/packet.webp', 'PACKET', '1 L', 'PKT-WATER', 40, 10, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'BEVERAGES' WHERE cf.code = 'C3' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c3-water', id, "cafeId", 40, 40, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c3-water' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c1-biscuits', cf.id, ct.id, 'Cream Biscuits', 'Vanilla cream sandwich biscuits', 10, '/images/menu/demo/packet.webp', 'PACKET', '60 g', 'PKT-BISCUITS', 5, 5, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C1' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c1-biscuits', id, "cafeId", 5, 5, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c1-biscuits' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c3-biscuits', cf.id, ct.id, 'Cream Biscuits', 'Vanilla cream sandwich biscuits', 10, '/images/menu/demo/packet.webp', 'PACKET', '60 g', 'PKT-BISCUITS', 5, 5, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C3' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c3-biscuits', id, "cafeId", 5, 5, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c3-biscuits' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c2-choco', cf.id, ct.id, 'Chocolate Bar', 'Milk chocolate bar', 40, '/images/menu/demo/packet.webp', 'PACKET', '40 g', 'PKT-CHOCO', 0, 3, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'SNACKS' WHERE cf.code = 'C2' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c2-choco', id, "cafeId", 0, 0, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c2-choco' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c2-juice', cf.id, ct.id, 'Fruit Juice Pack', 'Mixed fruit juice with straw', 25, '/images/menu/demo/packet.webp', 'PACKET', '200 ml', 'PKT-JUICE', 12, 4, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'BEVERAGES' WHERE cf.code = 'C2' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c2-juice', id, "cafeId", 12, 12, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c2-juice' ON CONFLICT DO NOTHING;
+INSERT INTO public."MenuItem" (id, "cafeId", "categoryId", name, description, price, "imageUrl", "itemType", "packSize", sku, "stockQty", "lowStockThreshold", "isAvailable", "isActive", "createdAt", "updatedAt")
+  SELECT 'pkt-c3-juice', cf.id, ct.id, 'Fruit Juice Pack', 'Mixed fruit juice with straw', 25, '/images/menu/demo/packet.webp', 'PACKET', '200 ml', 'PKT-JUICE', 12, 4, true, true, now(), now()
+    FROM public."Cafe" cf JOIN public."Category" ct ON ct."cafeId" = cf.id AND ct.name = 'BEVERAGES' WHERE cf.code = 'C3' ON CONFLICT DO NOTHING;
+INSERT INTO public."StockMovement" (id, "menuItemId", "cafeId", delta, "qtyAfter", reason) SELECT 'init-pkt-c3-juice', id, "cafeId", 12, 12, 'INITIAL' FROM public."MenuItem" WHERE id = 'pkt-c3-juice' ON CONFLICT DO NOTHING;

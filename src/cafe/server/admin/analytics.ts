@@ -24,7 +24,7 @@ export async function adminAnalytics(admin: AuthedAdmin, params?: { days?: numbe
       _count: { _all: true },
     }),
     prisma.orderItem.groupBy({
-      by: ['itemName', 'emoji'],
+      by: ['itemName'],
       where: { order: { createdAt: { gte: from }, orderStatus: { not: 'CANCELLED' } } },
       _sum: { subtotal: true, quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
@@ -89,7 +89,7 @@ export async function adminAnalytics(admin: AuthedAdmin, params?: { days?: numbe
       }))
       .sort((a, b) => b.revenue - a.revenue),
     byCategory: [...catMap.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.total - a.total),
-    byItem: byItem.map((r) => ({ name: r.itemName, emoji: r.emoji, quantity: r._sum?.quantity ?? 0, revenue: r._sum?.subtotal ?? 0 })),
+    byItem: byItem.map((r) => ({ name: r.itemName, quantity: r._sum?.quantity ?? 0, revenue: r._sum?.subtotal ?? 0 })),
     totals: {
       revenue: total.reduce((a, o) => a + o.totalAmount, 0),
       items: total.reduce((a, o) => a + o.itemCount, 0),
