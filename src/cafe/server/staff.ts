@@ -5,6 +5,8 @@ import { dateKey, dayEnd, dayStart } from '@/cafe/lib/dates';
 import { inr } from '@/cafe/lib/money';
 import { reconcileCash, type CashRecon } from '@/cafe/lib/revenue';
 import { orderInclude, toOrderDto } from './orders';
+import { audit } from '@/cafe/lib/audit';
+import { cafeOpenState } from '@/cafe/lib/cafe';
 
 /** Staff dashboard stats — strictly scoped to the staff member's cafe. */
 export async function staffDashboard(staff: AuthedStaff) {
@@ -102,4 +104,13 @@ export async function staffHistory(staff: AuthedStaff, days = 7) {
     totalRevenue: inr(recon.expectedCash),
     daily,
   };
+}
+
+/** Staff open/close switch for their own cafe. null = follow the schedule (closed on Sundays). */
+export async function staffSetCafeStatus(staff: AuthedStaff, manualStatus: unknown) {
+  const cafeId = staff.staff.assignedCafeId; // always from the session, never the request
+  const value = manualStatus === 'OPEN' || manualStatus === 'CLOSED' ? manualStatus : null;
+  const cafe = await prisma.cafe.update({ where: { id: cafeId }, data: { manualStatus: value } });
+  await audit(staff.session.id, 'CAFE_UPDATED', 'Cafe', cafeId, { manualStatus: value });
+  return { manualStatus: cafe.manualStatus, status: cafeOpenState(cafe) };
 }

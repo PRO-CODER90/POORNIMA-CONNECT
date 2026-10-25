@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ArrowLeft, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import { prisma } from '@/cafe/lib/db';
 import { getSession } from '@/cafe/lib/auth';
-import { cafeOpenState } from '@/cafe/lib/cafe';
+import { cafeOpenState, campusClock } from '@/cafe/lib/cafe';
 import { fmtTime12 } from '@/cafe/utils/format';
 import { OpenBadge } from '@/cafe/components/status';
 import { CartProvider } from '@/cafe/components/cart/CartContext';
@@ -43,6 +43,12 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
   const imageSrc = cafeImage(code);
   const openState = cafeOpenState(cafe);
   const isOpen = openState === 'OPEN';
+  const closedNote =
+    cafe.manualStatus === 'CLOSED'
+      ? 'until the cafe reopens'
+      : campusClock().sunday
+        ? 'today, as cafes are closed on Sundays'
+        : `until ${fmtTime12(cafe.openingTime)}`;
 
   const browser = {
     id: cafe.id,
@@ -133,7 +139,7 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
             >
               <AlertTriangle size={16} className="shrink-0 text-amber-600" aria-hidden />
               <span>
-                <strong>Kitchen Currently Closed.</strong> You can browse all items and prices, but placing cash orders is disabled until {fmtTime12(cafe.openingTime)}.
+                <strong>Kitchen Currently Closed.</strong> You can browse all items and prices, but placing cash orders is disabled {closedNote}.
               </span>
             </div>
           )}
