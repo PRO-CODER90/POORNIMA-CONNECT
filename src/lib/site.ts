@@ -9,9 +9,15 @@ export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "s
 /** The university's own website, if confirmed (ORG_URL). */
 export const ORG_URL = process.env.ORG_URL?.trim() || null;
 
-/** Absolute site origin for canonical URLs, sitemap and structured data. */
+/**
+ * Absolute site origin for canonical URLs, sitemap and structured data. Uses APP_URL when set;
+ * otherwise Vercel's production domain, then the deployment URL, so a build never fails just
+ * because APP_URL is missing (e.g. on Preview). Emailed links still require APP_URL (appUrl()).
+ */
 export function siteUrl(): string {
-  return appUrl();
+  if (process.env.APP_URL?.trim()) return appUrl();
+  const host = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  return host ? `https://${host.replace(/^https?:\/\//, "").replace(/\/$/, "")}` : "http://localhost:3000";
 }
 
 export const abs = (path: string) => `${siteUrl()}${path === "/" ? "/" : path}`;
