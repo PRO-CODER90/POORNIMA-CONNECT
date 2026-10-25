@@ -4,6 +4,9 @@ import { inr } from '@/cafe/lib/money';
 import { StatCard } from '@/cafe/components/ui';
 import { fmtDate } from '@/cafe/lib/dates';
 import AnalyticsCharts from '@/cafe/components/admin/AnalyticsCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Revenue Analytics' };
 
 export const dynamic = 'force-dynamic';
 

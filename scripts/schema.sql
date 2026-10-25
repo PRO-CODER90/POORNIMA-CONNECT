@@ -60,3 +60,19 @@ CREATE INDEX IF NOT EXISTS login_events_at ON login_events (at DESC);
 -- Housekeeping (runs with db:setup, never per login).
 DELETE FROM login_attempts WHERE updated_at < now() - interval '7 days';
 DELETE FROM login_events WHERE at < now() - interval '90 days';
+
+-- Contact form messages. Stored before the email is sent, so nothing is lost if SMTP is down.
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  name       TEXT NOT NULL,
+  email      TEXT NOT NULL,
+  subject    TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  ip_hash    TEXT,                                 -- SHA-256(ip + server secret), never the raw IP
+  user_agent TEXT,
+  status     TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','read','replied','spam')),
+  email_sent BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX IF NOT EXISTS contact_messages_created ON contact_messages (created_at DESC);
+DELETE FROM contact_messages WHERE created_at < now() - interval '12 months';

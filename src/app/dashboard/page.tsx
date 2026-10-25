@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import { getSession } from "@/lib/auth";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Dashboard', robots: { index: false, follow: false } };
 
 // After signing in, everyone lands here and is sent to their CafeConnect area.
 const AREA: Record<string, string> = {

@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import LoginCard from "@/components/LoginCard";
+import { JsonLd } from "@/components/public/JsonLd";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import CookieConsent from "@/components/public/CookieConsent";
+import { orgGraph, og } from "@/lib/site";
 import { ERRORS, type ErrorCode } from "@/lib/errors";
 
 function GradCap({ className }: { className?: string }) {
@@ -16,6 +22,20 @@ const stats = [
   { value: "Global", label: "Opportunities" },
 ];
 
+// One-time setup/reset links land here: those URLs are never indexed and canonicalise to "/".
+export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
+  const q = await searchParams;
+  const token = !!(q.setup || q.reset);
+  return {
+    title: { absolute: "PU CafeConnect — Sign in to Campus Dining" },
+    description:
+      "Sign in to PU CafeConnect with your enrollment number or university Google account to order from Poornima University's campus cafes.",
+    alternates: { canonical: "/" },
+    openGraph: og("PU CafeConnect — Sign in to Campus Dining", "/"),
+    ...(token ? { robots: { index: false, follow: false } } : {}),
+  };
+}
+
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { error, setup, reset } = await searchParams;
   const code = typeof error === "string" && error in ERRORS ? (error as ErrorCode) : undefined;
@@ -23,14 +43,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const link = valid(setup) ? { token: setup, mode: "setup" as const } : valid(reset) ? { token: reset, mode: "reset" as const } : undefined;
 
   return (
-    <main
-      className="relative min-h-screen w-full overflow-hidden text-white bg-cover bg-center"
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.6)), url(/campus.jpg)",
-      }}
-    >
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-10 sm:py-8">
+    <main className="relative min-h-screen w-full overflow-hidden bg-slate-900 text-white">
+      <Image src="/campus.webp" alt="" fill priority sizes="100vw" className="object-cover" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/35 to-black/60" aria-hidden />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-10 sm:py-8">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <GradCap className="h-9 w-9 sm:h-11 sm:w-11" />
@@ -71,7 +87,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
           <LoginCard initialError={code} initialLink={link} />
         </div>
+        <PublicFooter tone="dark" />
       </div>
+      <JsonLd data={orgGraph()} />
+      <CookieConsent />
     </main>
   );
 }

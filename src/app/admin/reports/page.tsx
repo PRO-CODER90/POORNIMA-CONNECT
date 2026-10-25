@@ -1,5 +1,8 @@
 import { requireAdminPage } from '@/cafe/lib/rbac';
 import ReportsPanel from '@/cafe/components/admin/ReportsPanel';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Reports' };
 
 export const dynamic = 'force-dynamic';
 

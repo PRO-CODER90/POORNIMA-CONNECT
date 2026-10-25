@@ -4,6 +4,9 @@ import CafeStatusSwitch from '@/cafe/components/staff/CafeStatusSwitch';
 import { prisma } from '@/cafe/lib/db';
 import { cafeOpenState } from '@/cafe/lib/cafe';
 import { fmtTime12 } from '@/cafe/utils/format';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Counter' };
 
 export const dynamic = 'force-dynamic';
 

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound, redirect } from 'next/navigation';
@@ -16,6 +17,12 @@ import { cafeImage } from '@/cafe/components/CafeCard';
 import { getCafeWithMenu } from '@/cafe/server/student';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const cafe = await prisma.cafe.findFirst({ where: { OR: [{ id }, { code: id.toUpperCase() }], isActive: true }, select: { name: true } });
+  return { title: cafe ? `${cafe.name} Menu` : 'Cafe Menu', robots: { index: false, follow: false } };
+}
 
 export default async function CafePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();

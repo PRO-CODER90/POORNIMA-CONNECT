@@ -5,7 +5,7 @@ import { isAllowedImageUrl } from '@/cafe/lib/stock';
 const optInt = (min: number, max: number, label: string) =>
   z.preprocess(
     (v) => (v === '' || v === undefined ? null : v),
-    z.coerce.number({ invalid_type_error: `${label} must be a number.` }).int(`${label} must be a whole number.`).min(min, `${label} must be at least ${min}.`).max(max, `${label} is too large.`).nullable(),
+    z.coerce.number({ error: `${label} must be a number.` }).int(`${label} must be a whole number.`).min(min, `${label} must be at least ${min}.`).max(max, `${label} is too large.`).nullable(),
   );
 const optText = (max: number, label: string) =>
   z.preprocess((v) => (typeof v === 'string' ? v.trim() || null : v ?? null), z.string().max(max, `${label} must be ${max} characters or fewer.`).nullable());
@@ -14,8 +14,8 @@ export const itemFields = z.object({
   name: z.string().trim().min(2, 'Item name must be at least 2 characters.').max(80, 'Item name must be 80 characters or fewer.'),
   categoryId: z.string().min(1, 'Choose a category.'),
   description: z.preprocess((v) => (typeof v === 'string' ? v.trim() : ''), z.string().max(300, 'Description must be 300 characters or fewer.')),
-  itemType: z.enum(['PREPARED', 'PACKET'], { errorMap: () => ({ message: 'Choose an item type.' }) }),
-  price: z.coerce.number({ invalid_type_error: 'Enter a price.' }).int('Price must be whole rupees.').min(1, 'Price must be at least ₹1.').max(100000, 'Price is too high.'),
+  itemType: z.enum(['PREPARED', 'PACKET'], { error: 'Choose an item type.' }),
+  price: z.coerce.number({ error: 'Enter a price.' }).int('Price must be whole rupees.').min(1, 'Price must be at least ₹1.').max(100000, 'Price is too high.'),
   mrp: optInt(1, 100000, 'MRP'),
   isVeg: z.boolean(),
   packSize: optText(30, 'Pack size'),

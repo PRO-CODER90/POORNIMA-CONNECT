@@ -5,6 +5,9 @@ import { inr } from '@/cafe/lib/money';
 import { dateKey } from '@/cafe/lib/dates';
 import SpendingCharts from '@/cafe/components/student/SpendingCharts';
 import { Wallet, Calendar, CalendarDays, TrendingUp } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'My Spending' };
 
 export const dynamic = 'force-dynamic';
 

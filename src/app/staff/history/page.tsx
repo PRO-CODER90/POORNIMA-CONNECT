@@ -4,6 +4,9 @@ import { inr } from '@/cafe/lib/money';
 import { StatCard, EmptyState } from '@/cafe/components/ui';
 import { fmtDate } from '@/cafe/lib/dates';
 import { BarTrend } from '@/cafe/components/charts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Order History' };
 
 export const dynamic = 'force-dynamic';
 

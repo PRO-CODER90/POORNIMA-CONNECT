@@ -5,6 +5,9 @@ import { StatCard } from '@/cafe/components/ui';
 import { OpenBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import AdminDashboardCharts from '@/cafe/components/admin/DashboardCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Dashboard' };
 
 export const dynamic = 'force-dynamic';
 

@@ -3,6 +3,9 @@ import { prisma } from '@/cafe/lib/db';
 import { badRequest } from '@/cafe/lib/api';
 import { listInventory } from '@/cafe/server/inventory';
 import AdminInventory from '@/cafe/components/admin/AdminInventory';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Menu' };
 
 export const dynamic = 'force-dynamic';
 

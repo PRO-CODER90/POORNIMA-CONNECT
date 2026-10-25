@@ -1,5 +1,9 @@
 import { requireStaffPage } from '@/cafe/lib/rbac';
 import RoleShell from '@/cafe/components/layout/RoleShell';
+import type { Metadata } from 'next';
+
+// Signed-in area: never indexed (the X-Robots-Tag header in next.config.ts says the same).
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export const dynamic = 'force-dynamic';
 

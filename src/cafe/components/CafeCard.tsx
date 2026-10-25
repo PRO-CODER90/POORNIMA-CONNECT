@@ -28,7 +28,20 @@ export function cafeImage(code: string) {
   return CAFE_IMAGES[code.toUpperCase()] ?? CAFE_IMAGES.C1;
 }
 
-export default function CafeCard({ cafe, showDescription = false }: { cafe: CafeCardData; showDescription?: boolean }) {
+export default function CafeCard({
+  cafe,
+  showDescription = false,
+  href,
+  ctaLabel,
+  priority = false,
+}: {
+  cafe: CafeCardData;
+  showDescription?: boolean;
+  /** Defaults to the cafe's menu; the public /dining page sends visitors to sign in instead. */
+  href?: string;
+  ctaLabel?: string;
+  priority?: boolean;
+}) {
   const code = cafe.code.toUpperCase();
   const isOpen = cafe.status === 'OPEN';
   // "Cafe 1 · Chai Point" → "Chai Point"; the cafe number already shows in the code chip.
@@ -38,13 +51,14 @@ export default function CafeCard({ cafe, showDescription = false }: { cafe: Cafe
 
   return (
     <Link
-      href={`/cafe/${cafe.code}`}
+      href={href ?? `/cafe/${cafe.code}`}
       className="surface group flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-pu-500 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <div className="relative h-48 w-full overflow-hidden bg-slate-100">
         <Image
           src={cafeImage(code)}
-          alt=""
+          alt={`${title} cafe, ${cafe.location}`}
+          priority={priority}
           fill
           sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"
           className={`object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
@@ -112,7 +126,7 @@ export default function CafeCard({ cafe, showDescription = false }: { cafe: Cafe
             {isOpen ? 'Taking cash orders' : 'Not taking orders now'}
           </p>
           <span className={`${isOpen ? 'btn-solid-pu' : 'btn-outline-pu group-hover:bg-pu-50'} shrink-0`}>
-            {isOpen ? 'Order now' : 'View menu'}
+            {ctaLabel ?? (isOpen ? 'Order now' : 'View menu')}
             <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden />
           </span>
         </div>

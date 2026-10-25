@@ -11,6 +11,9 @@ import { fmtTime12 } from '@/cafe/utils/format';
 import CafeQR from '@/cafe/components/qr/CafeQR';
 import CafeSettingsForm from '@/cafe/components/admin/CafeSettingsForm';
 import AdminCafeCharts from '@/cafe/components/admin/CafeCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Cafe Details' };
 
 export const dynamic = 'force-dynamic';
 

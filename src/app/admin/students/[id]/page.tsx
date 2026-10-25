@@ -8,6 +8,9 @@ import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import { fmtDateTime } from '@/cafe/lib/dates';
 import AdminStudentCharts from '@/cafe/components/admin/StudentCharts';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Student Details' };
 
 export const dynamic = 'force-dynamic';
 

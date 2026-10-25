@@ -5,6 +5,9 @@ import { requireStudentPage } from '@/cafe/lib/rbac';
 import { getStudentOrder } from '@/cafe/server/orders';
 import OrderDetailClient from '@/cafe/components/student/OrderDetailClient';
 import { PageHeader } from '@/cafe/components/ui';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Order Details' };
 
 export const dynamic = 'force-dynamic';
 

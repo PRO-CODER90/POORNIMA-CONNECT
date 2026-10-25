@@ -4,6 +4,9 @@ import { cafeOpenState } from '@/cafe/lib/cafe';
 import { fmtTime12 } from '@/cafe/utils/format';
 import { OpenBadge } from '@/cafe/components/status';
 import QuickCafeControl from '@/cafe/components/admin/QuickCafeControls';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Settings' };
 
 export const dynamic = 'force-dynamic';
 

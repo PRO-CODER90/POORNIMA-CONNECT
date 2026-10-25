@@ -5,6 +5,9 @@ import { inr } from '@/cafe/lib/money';
 import { fmtDateTime } from '@/cafe/lib/dates';
 import { Badge } from '@/cafe/components/ui';
 import StudentSearch from '@/cafe/components/admin/StudentSearch';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Students' };
 
 export const dynamic = 'force-dynamic';
 

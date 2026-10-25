@@ -4,6 +4,9 @@ import { adminCafes } from '@/cafe/server/admin/dashboard';
 import { OpenBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import { fmtTime12 } from '@/cafe/utils/format';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Admin · Cafes' };
 
 export const dynamic = 'force-dynamic';
 

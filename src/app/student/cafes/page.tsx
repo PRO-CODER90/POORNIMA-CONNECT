@@ -3,6 +3,9 @@ import { listCafesForStudent } from '@/cafe/server/student';
 import CafeCard from '@/cafe/components/CafeCard';
 import { EmptyState, PageHeader } from '@/cafe/components/ui';
 import { Coffee } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Campus Cafes' };
 
 export const dynamic = 'force-dynamic';
 
