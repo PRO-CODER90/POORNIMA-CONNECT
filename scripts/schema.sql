@@ -76,3 +76,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 );
 CREATE INDEX IF NOT EXISTS contact_messages_created ON contact_messages (created_at DESC);
 DELETE FROM contact_messages WHERE created_at < now() - interval '12 months';
+
+-- Optional personal email: password-reset links go to it as well as the university email.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS personal_email TEXT;
+DO $$ BEGIN ALTER TABLE users ADD CONSTRAINT users_personal_email_lower CHECK (personal_email = lower(personal_email)); EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -3,7 +3,7 @@ import { oneLine } from "@/lib/contact-schema";
 
 export { oneLine };
 
-export type MailKind = "reset" | "setup" | "changed" | "temp";
+export type MailKind = "reset" | "setup" | "changed" | "temp" | "recovery";
 
 export interface MailData {
   name: string;
@@ -28,6 +28,7 @@ const SUBJECT: Record<MailKind, string> = {
   setup: "Set up your University Portal password",
   changed: "Your University Portal password was changed",
   temp: "Your University Portal login details",
+  recovery: "Your password-reset email was changed",
 };
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -80,6 +81,19 @@ function body(kind: MailKind, d: MailData) {
       text:
         `Hi ${d.name},\n\n` +
         `Your University Portal password was just changed.\n\n` +
+        `If you did not make this change, please contact support immediately to secure your account.`,
+    };
+  }
+
+  if (kind === "recovery") {
+    return {
+      html:
+        `<p>Hi ${n},</p>` +
+        `<p>The personal email that receives your University Portal password-reset links was just changed.</p>` +
+        `<p style="color:#666;font-size:13px;margin-top:20px">If you did not make this change, please contact support immediately to secure your account.</p>`,
+      text:
+        `Hi ${d.name},\n\n` +
+        `The personal email that receives your University Portal password-reset links was just changed.\n\n` +
         `If you did not make this change, please contact support immediately to secure your account.`,
     };
   }
