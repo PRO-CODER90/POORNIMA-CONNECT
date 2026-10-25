@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 // ── small shared primitives (keep pages lean) ──
 
@@ -109,8 +110,10 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
-  if (!open) return null;
-  return (
+  if (!open || typeof document === 'undefined') return null;
+  // Portal to <body>: page content sits in its own stacking layer, which would otherwise keep the
+  // dialog underneath the floating dock.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
       <div className={`relative z-10 max-h-[92vh] w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'} overflow-y-auto rounded-t-[20px] bg-white p-5 shadow-xl sm:rounded-2xl`}>
@@ -122,7 +125,8 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
