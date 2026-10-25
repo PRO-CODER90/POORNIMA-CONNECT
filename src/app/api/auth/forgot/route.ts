@@ -43,11 +43,10 @@ export const POST = withErrors(async (req: Request) => {
       // Generate a secure one-time reset link using the existing auth_tokens table.
       const rawToken = await createToken(user.id, "reset");
       const resetUrl = `${appUrl()}/?reset=${rawToken}`;
-      await sendEmail(user.email, "reset", {
-        name: user.name,
-        link: resetUrl,
-      });
-      console.info(`[forgot] sent reset link to user ${user.id}`);
+      // University email always; the personal email too when the user has added one.
+      const to = [...new Set([user.email, user.personal_email].filter((e): e is string => !!e))];
+      for (const addr of to) await sendEmail(addr, "reset", { name: user.name, link: resetUrl });
+      console.info(`[forgot] sent reset link to user ${user.id} (${to.length} address${to.length > 1 ? "es" : ""})`);
 
       // Optional admin notification for account recovery events
       if (process.env.ADMIN_EMAIL) {

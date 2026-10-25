@@ -38,7 +38,8 @@ async function attempt(keys, correct = false) {
 describe("login guard (3 attempts, escalating lock)", () => {
   before(async () => {
     pg = new PGlite();
-    await pg.exec(schema.slice(schema.indexOf("-- Login attempt limiter")));
+    // Only the limiter tables: later sections (contact form, users columns) need tables not created here.
+    await pg.exec(schema.slice(schema.indexOf("-- Login attempt limiter"), schema.indexOf("-- Contact form messages")));
   });
   beforeEach(() => pg.exec("DELETE FROM login_attempts"));
 
