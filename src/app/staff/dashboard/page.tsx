@@ -1,10 +1,15 @@
 import { requireStaffPage } from '@/cafe/lib/rbac';
 import StaffDashboard from '@/cafe/components/staff/StaffDashboard';
+import CafeStatusSwitch from '@/cafe/components/staff/CafeStatusSwitch';
+import { prisma } from '@/cafe/lib/db';
+import { cafeOpenState } from '@/cafe/lib/cafe';
+import { fmtTime12 } from '@/cafe/utils/format';
 
 export const dynamic = 'force-dynamic';
 
 export default async function StaffDashboardPage() {
   const { staff, cafe } = await requireStaffPage();
+  const timing = await prisma.cafe.findUniqueOrThrow({ where: { id: cafe.id } });
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
@@ -16,6 +21,11 @@ export default async function StaffDashboardPage() {
             Welcome, <span className="font-bold text-slate-700">{staff.name}</span> · {staff.staffCode}
           </p>
         </div>
+        <CafeStatusSwitch
+          manualStatus={timing.manualStatus}
+          status={cafeOpenState(timing)}
+          hours={`${fmtTime12(timing.openingTime)} – ${fmtTime12(timing.closingTime)}`}
+        />
       </div>
       <StaffDashboard />
     </div>
