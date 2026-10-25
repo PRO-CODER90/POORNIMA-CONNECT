@@ -114,6 +114,22 @@ function body(kind: MailKind, d: MailData) {
 }
 
 export function getEmailConfig(): EmailConfig {
+  // No SMTP settings but a Resend API key: send through Resend's SMTP relay with that key.
+  const resendKey = process.env.RESEND_API_KEY?.trim();
+  if (!process.env.SMTP_HOST?.trim() && resendKey) {
+    return {
+      host: "smtp.resend.com",
+      port: 465,
+      user: "resend",
+      pass: resendKey,
+      secure: true,
+      // onboarding@resend.dev works without a verified domain, but Resend then only delivers to the
+      // Resend account's own address. Set MAIL_FROM on a verified domain to email everyone.
+      from: process.env.MAIL_FROM?.trim() || "PU CafeConnect <onboarding@resend.dev>",
+      isConfigured: true,
+      missing: [],
+    };
+  }
   const host = process.env.SMTP_HOST?.trim() || "";
   const portStr = process.env.SMTP_PORT?.trim() || "";
   const user = process.env.SMTP_USER?.trim() || "";

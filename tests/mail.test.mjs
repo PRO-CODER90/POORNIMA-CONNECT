@@ -23,6 +23,7 @@ describe("Nodemailer Mail Service Audit & Unit Tests", () => {
     delete process.env.MAIL_FROM;
     delete process.env.ADMIN_EMAIL;
     delete process.env.APP_URL;
+    delete process.env.RESEND_API_KEY;
   });
 
   afterEach(() => {
@@ -31,6 +32,18 @@ describe("Nodemailer Mail Service Audit & Unit Tests", () => {
   });
 
   describe("getEmailConfig()", () => {
+    it("uses Resend's SMTP relay when only RESEND_API_KEY is set", () => {
+      process.env.RESEND_API_KEY = "re_test";
+      const c = getEmailConfig();
+      assert.equal(c.isConfigured, true);
+      assert.deepEqual([c.host, c.port, c.secure, c.user, c.pass], ["smtp.resend.com", 465, true, "resend", "re_test"]);
+      assert.match(c.from, /onboarding@resend\.dev/);
+      process.env.MAIL_FROM = "PU <no-reply@cafe.example.in>";
+      assert.equal(getEmailConfig().from, "PU <no-reply@cafe.example.in>");
+      process.env.SMTP_HOST = "smtp.other.com";
+      assert.equal(getEmailConfig().host, "smtp.other.com", "explicit SMTP settings win");
+    });
+
     it("reports missing variables when SMTP is not configured", () => {
       const config = getEmailConfig();
       assert.equal(config.isConfigured, false);
