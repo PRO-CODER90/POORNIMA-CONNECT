@@ -121,7 +121,7 @@ export default function StaffManager({ initial, cafes }: { initial: StaffRow[]; 
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead>
-            <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3">Staff</th>
               <th className="px-4 py-3">Staff ID</th>
               <th className="px-4 py-3">Email</th>
@@ -133,7 +133,7 @@ export default function StaffManager({ initial, cafes }: { initial: StaffRow[]; 
           </thead>
           <tbody>
             {rows.map((s) => (
-              <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/60">
+              <tr key={s.id} className="border-b border-slate-50 hover:bg-pu-50/60">
                 <td className="px-4 py-3 font-bold text-slate-800">{s.name}</td>
                 <td className="px-4 py-3 font-mono text-xs font-bold">{s.staffCode}</td>
                 <td className="px-4 py-3 text-xs text-slate-500">{s.email}</td>

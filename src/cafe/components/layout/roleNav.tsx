@@ -34,8 +34,6 @@ export interface NavItem {
 
 export interface RoleNavDef {
   roleLabel: string;
-  accent: string;
-  accentText: string;
   nav: NavItem[];
   mobileNav: NavItem[];
 }
@@ -49,8 +47,6 @@ export interface RoleNavDef {
 export const ROLE_NAV: Record<Role, RoleNavDef> = {
   student: {
     roleLabel: 'Student Portal',
-    accent: 'bg-navy',
-    accentText: 'text-white',
     nav: [
       {
         href: '/student/dashboard',
@@ -96,11 +92,8 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
   },
   staff: {
     roleLabel: 'Cafe Staff',
-    accent: 'bg-teal-900',
-    accentText: 'text-white',
     nav: [
-      { href: '/staff/dashboard', label: 'Live Orders', icon: LayoutDashboard },
-      { href: '/staff/dashboard', label: 'Counter', icon: ClipboardList, match: (p) => p === '/staff/dashboard' },
+      { href: '/staff/dashboard', label: 'Counter', icon: ClipboardList, match: (p) => p === '/staff/dashboard' || p === '/staff' },
       { href: '/staff/history', label: 'History', icon: History },
     ],
     mobileNav: [
@@ -110,8 +103,6 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
   },
   admin: {
     roleLabel: 'University Admin',
-    accent: 'bg-indigo-950',
-    accentText: 'text-white',
     nav: [
       { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/admin/cafes', label: 'Cafes', icon: Coffee },
@@ -130,7 +121,6 @@ export const ROLE_NAV: Record<Role, RoleNavDef> = {
       { href: '/admin/dashboard', label: 'Home', icon: LayoutDashboard },
       { href: '/admin/orders', label: 'Orders', icon: ClipboardList },
       { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-      { href: '/admin/settings', label: 'Settings', icon: Settings },
     ],
   },
 };

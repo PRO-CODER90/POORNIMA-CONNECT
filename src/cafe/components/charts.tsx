@@ -17,9 +17,10 @@ import {
 } from 'recharts';
 import { inr } from '@/cafe/lib/money';
 
-const PALETTE = ['#f97316', '#0ea5e9', '#8b5cf6', '#10b981', '#f43f5e', '#f59e0b', '#64748b'];
+const TOOLTIP = { borderRadius: 12, border: 'none', fontSize: 12, boxShadow: '0 6px 24px -12px rgba(31,79,209,.18)' };
+const PALETTE = ['#2f63e8', '#e0457b', '#f08a1c', '#1f9d62', '#8b5cf6', '#0ea5e9', '#64748b'];
 
-export function AreaTrend({ data, color = '#f97316', height = 220 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
+export function AreaTrend({ data, color = '#2f63e8', height = 220 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -30,10 +31,10 @@ export function AreaTrend({ data, color = '#f97316', height = 220 }: { data: { l
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#eef1f6" vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={54} tickFormatter={(v: number) => inr(v)} />
-          <Tooltip formatter={(v) => [inr(Number(v)), 'Amount']} labelStyle={{ fontSize: 12 }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+          <Tooltip formatter={(v) => [inr(Number(v)), 'Amount']} labelStyle={{ fontSize: 12 }} contentStyle={TOOLTIP} />
           <Area type="monotone" dataKey="value" stroke={color} strokeWidth={2.5} fill={`url(#grad-${color.slice(1)})`} />
         </AreaChart>
       </ResponsiveContainer>
@@ -41,15 +42,15 @@ export function AreaTrend({ data, color = '#f97316', height = 220 }: { data: { l
   );
 }
 
-export function BarTrend({ data, color = '#f97316', height = 220 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
+export function BarTrend({ data, color = '#2f63e8', height = 220 }: { data: { label: string; value: number }[]; color?: string; height?: number }) {
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#eef1f6" vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={54} tickFormatter={(v: number) => inr(v)} />
-          <Tooltip formatter={(v) => [inr(Number(v)), 'Amount']} labelStyle={{ fontSize: 12 }} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} cursor={{ fill: '#f8fafc' }} />
+          <Tooltip formatter={(v) => [inr(Number(v)), 'Amount']} labelStyle={{ fontSize: 12 }} contentStyle={TOOLTIP} cursor={{ fill: '#f8fafc' }} />
           <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} maxBarSize={42} />
         </BarChart>
       </ResponsiveContainer>
@@ -80,7 +81,7 @@ export function Donut({
               <Cell key={i} fill={palette[i % palette.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(v) => (money ? inr(Number(v)) : String(v))} contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
+          <Tooltip formatter={(v) => (money ? inr(Number(v)) : String(v))} contentStyle={TOOLTIP} />
           <Legend wrapperStyle={{ fontSize: 11 }} iconSize={9} />
         </PieChart>
       </ResponsiveContainer>

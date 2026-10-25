@@ -33,7 +33,7 @@ export default function AnalyticsCharts({
       </div>
       <div className="card p-5">
         <h3 className="mb-3 text-sm font-extrabold text-slate-900">Revenue by cafe</h3>
-        <BarTrend data={byCafe} color="#f97316" />
+        <BarTrend data={byCafe} color="#2f63e8" />
       </div>
       <div className="card p-5">
         <h3 className="mb-3 text-sm font-extrabold text-slate-900">Revenue by category</h3>

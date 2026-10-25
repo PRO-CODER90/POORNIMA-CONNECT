@@ -2,7 +2,8 @@ import bcrypt from "bcryptjs";
 import { clientIp, fail, guardPost, readJson, withErrors } from "@/lib/api";
 import { startSession } from "@/lib/auth";
 import { appUrl, sendEmail } from "@/lib/mail";
-import { clearHits, isLimited, LOGIN_IP_LIMIT, LOGIN_LIMIT, MAIL_IP_LIMIT, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
+import { checkLock, clearAttempts, logLoginEvent, loginKeys, reserveAttempt, type GuardState } from "@/lib/loginGuard";
+import { isLimited, MAIL_IP_LIMIT, MAIL_LIMIT, recordHit } from "@/lib/rateLimit";
 import { consumeTempPassword, createToken, TTL } from "@/lib/tokens";
 import { findByEnrollment, maskEmail } from "@/lib/users";
 
@@ -20,17 +21,39 @@ export const POST = withErrors(async (req: Request) => {
   if (!enr || !password) return fail("MISSING_FIELDS");
   if (!/^[A-Z0-9]{1,12}$/.test(enr)) return fail("INVALID_ENROLLMENT_FORMAT");
 
-  // Per IP+enrollment and per enrollment, so spoofed IPs can't brute-force one account.
   const ip = clientIp(req);
-  const keys = [`ipenr:${ip}:${enr}`, `enr:${enr}`];
-  const ipKey = [`ipfail:${ip}`];
-  if ((await isLimited(keys, LOGIN_LIMIT)) || (await isLimited(ipKey, LOGIN_IP_LIMIT))) return fail("TOO_MANY_ATTEMPTS");
-  if (password.length > 64) {
-    // Longer than any password we accept: don't spend bcrypt time on it.
-    await recordHit(keys, LOGIN_LIMIT);
-    await recordHit(ipKey, LOGIN_IP_LIMIT);
-    return fail("INVALID_CREDENTIALS");
+  const userAgent = req.headers.get("user-agent");
+  const keys = loginKeys(ip, enr);
+  const locked = (g: GuardState) =>
+    fail(
+      "ACCOUNT_LOCKED",
+      { retryAfterSeconds: g.retryAfterS, lockedUntil: g.lockedUntil },
+      { "Retry-After": String(g.retryAfterS) },
+    );
+
+  // Fail closed: if the limiter's database is unreachable this throws and withErrors answers SERVER_ERROR
+  // without ever checking the password. Locked: don't spend bcrypt time at all.
+  const lock = await checkLock(keys);
+  if (lock.locked) {
+    await logLoginEvent({ loginId: enr, ip, outcome: "LOCKED", userAgent });
+    return locked(lock);
   }
+  // Count the attempt BEFORE checking the password, so parallel guesses can't exceed the limit.
+  const g = await reserveAttempt(keys);
+  if (g.locked) {
+    await logLoginEvent({ loginId: enr, ip, outcome: "LOCKED", userAgent });
+    return locked(g);
+  }
+  // Wrong password: the lock this attempt started (if any) or the attempts left.
+  const failed = async () => {
+    if (g.lockStarted) {
+      await logLoginEvent({ loginId: enr, ip, outcome: "LOCK_STARTED", userAgent });
+      return locked(g);
+    }
+    await logLoginEvent({ loginId: enr, ip, outcome: "BAD_CREDENTIALS", userAgent });
+    return fail("INVALID_CREDENTIALS", { attemptsLeft: g.attemptsLeft });
+  };
+  if (password.length > 64) return failed(); // longer than any password we accept: don't spend bcrypt time
 
   const user = await findByEnrollment(enr);
 
@@ -61,16 +84,13 @@ export const POST = withErrors(async (req: Request) => {
   // Not the real password: maybe the temporary one from forgot-password. It's single-use, so it
   // never opens a session; it only lets the user choose a new password right away.
   if (user && !matches && (await consumeTempPassword(user.id, password))) {
-    await clearHits(keys);
+    await clearAttempts(keys.slice(0, 2));
     const changeToken = await createToken(user.id, "setup", TTL.passwordChange);
     return fail("PASSWORD_CHANGE_REQUIRED", { changeToken, name: user.name });
   }
 
-  if (!user || !matches) {
-    await recordHit(keys, LOGIN_LIMIT);
-    await recordHit(ipKey, LOGIN_IP_LIMIT);
-    return fail("INVALID_CREDENTIALS");
-  }
-  await clearHits(keys); // per-account counters only; the per-IP counter keeps running
+  if (!user || !matches) return failed();
+  await clearAttempts(keys.slice(0, 2)); // ie + id counters only; the per-IP ceiling keeps running
+  await logLoginEvent({ loginId: enr, ip, outcome: "SUCCESS", userAgent });
   return startSession(user);
 });

@@ -11,7 +11,8 @@
     "verify:smtp": "node --env-file-if-exists=.env.local scripts/verify-smtp.mjs",
     "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs",
     "postinstall": "prisma generate",
-    "db:seed:cafes": "tsx prisma/seed.ts"
+    "db:seed:cafes": "tsx prisma/seed.ts",
+    "db:reset:students": "tsx scripts/reset-student-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -28,6 +29,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.2",

@@ -20,7 +20,7 @@ export default function AdminCafeCharts({
       </div>
       <div className="card p-5">
         <h3 className="mb-3 text-sm font-extrabold text-slate-900">Monthly sales (6 months)</h3>
-        <BarTrend data={monthly.map((x) => ({ label: x.month, value: x.value }))} color="#f97316" />
+        <BarTrend data={monthly.map((x) => ({ label: x.month, value: x.value }))} color="#2f63e8" />
       </div>
       <div className="card p-5 lg:col-span-2">
         <h3 className="mb-3 text-sm font-extrabold text-slate-900">Category sales</h3>

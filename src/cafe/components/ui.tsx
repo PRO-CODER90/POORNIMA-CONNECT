@@ -52,20 +52,20 @@ export function StatCard({
   }
 
   const tones: Record<string, string> = {
-    default: 'text-navy',
-    brand: 'text-brand-600',
+    default: 'text-ink',
+    brand: 'text-pu-600',
     green: 'text-emerald-700',
     red: 'text-rose-700',
     blue: 'text-sky-700',
-    navy: 'text-navy',
-    amber: 'text-amber',
+    navy: 'text-ink',
+    amber: 'text-amber-600',
   };
   return (
-    <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] transition-all hover:border-slate-300">
+    <div className="surface p-4">
       <div className="flex items-center justify-between gap-3">
         <span className="truncate text-xs font-medium text-slate-500">{label}</span>
         {icon ? (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-slate-50 text-slate-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-pu-50 text-pu-600">
             {icon}
           </div>
         ) : null}
@@ -112,8 +112,8 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden />
-      <div className={`relative z-10 max-h-[92vh] w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'} overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl`}>
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onClose} aria-hidden />
+      <div className={`relative z-10 max-h-[92vh] w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-md'} overflow-y-auto rounded-t-[20px] bg-white p-5 shadow-xl sm:rounded-2xl`}>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-900">{title}</h3>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Close">
@@ -149,7 +149,7 @@ export function EmptyState({
   return (
     <div
       className={`flex flex-col items-center justify-center gap-2 px-6 py-12 text-center ${
-        surface ? 'surface' : 'rounded-xl border border-dashed border-slate-300 bg-white'
+        'surface'
       }`}
     >
       {icon ? (
@@ -163,7 +163,7 @@ export function EmptyState({
       ) : emoji ? (
         <div className="text-3xl mb-1">{emoji}</div>
       ) : null}
-      <div className={`text-sm font-semibold ${surface ? 'text-ink' : 'text-navy'}`}>{title}</div>
+      <div className={`text-sm font-semibold ${surface ? 'text-ink' : 'text-ink'}`}>{title}</div>
       {sub ? <div className={`max-w-xs text-xs leading-relaxed ${surface ? 'text-muted' : 'text-slate-500'}`}>{sub}</div> : null}
       {action ? <div className="mt-3">{action}</div> : null}
     </div>

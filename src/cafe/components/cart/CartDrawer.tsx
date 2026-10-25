@@ -99,7 +99,7 @@ export default function CartDrawer() {
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] font-medium text-muted">Payment Status</span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
                   CASH PENDING
                 </span>
               </div>
@@ -112,8 +112,8 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-left text-xs text-amber-900">
-              <Banknote size={16} className="mt-0.5 shrink-0 text-amber" aria-hidden />
+            <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900">
+              <Banknote size={16} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
               <div>
                 <span className="font-semibold text-ink">Payment Instructions: </span>
                 Please pay <span className="font-mono font-bold">{inr(placed.totalAmount)}</span> in cash directly to the cafe staff at the counter.
@@ -239,8 +239,8 @@ export default function CartDrawer() {
                   <span className="font-mono text-lg font-bold text-ink">{inr(cart.subtotal)}</span>
                 </div>
 
-                <div className="flex items-start gap-2.5 rounded-xl border border-amber/30 bg-amber/10 p-3 text-xs text-amber-900">
-                  <Banknote size={15} className="mt-0.5 shrink-0 text-amber" aria-hidden />
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                  <Banknote size={15} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
                   <div className="leading-relaxed">
                     <span className="font-semibold text-ink">Cash Only: </span>
                     Present order number and pay exact cash at counter upon confirmation.

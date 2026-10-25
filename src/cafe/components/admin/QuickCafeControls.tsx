@@ -34,7 +34,7 @@ export default function QuickCafeControl({ cafeId, manualStatus }: { cafeId: str
           disabled={busy !== null}
           className={`rounded-xl px-3 py-1.5 text-xs font-bold ${
             (v === 'AUTO' ? manualStatus === null : manualStatus === v)
-              ? 'bg-slate-900 text-white'
+              ? 'bg-pu-600 text-white'
               : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300'
           } disabled:opacity-50`}
           aria-pressed={v === 'AUTO' ? manualStatus === null : manualStatus === v}

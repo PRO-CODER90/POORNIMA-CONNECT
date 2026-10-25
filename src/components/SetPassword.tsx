@@ -16,7 +16,7 @@ interface Props {
 }
 
 const LABELS = ["", "Weak", "Fair", "Good", "Strong"];
-const COLORS = ["bg-white/20", "bg-red-400", "bg-amber-400", "bg-lime-400", "bg-emerald-400"];
+const COLORS = ["bg-slate-200", "bg-red-400", "bg-amber-400", "bg-lime-400", "bg-emerald-400"];
 
 /** "Set your password" screen shown inside the login card (setup link, Google first sign-in, or temporary password). */
 export default function SetPassword({ token, mode, name: initialName, onBack, onDone, onRequestNewLink }: Props) {
@@ -72,7 +72,7 @@ export default function SetPassword({ token, mode, name: initialName, onBack, on
       <h2 id="card-title" className="text-center text-2xl font-semibold">{title}</h2>
 
       {state === "checking" && (
-        <div className="mt-6 flex items-center gap-3 text-sm text-white/80" role="status">
+        <div className="mt-6 flex items-center gap-3 text-sm text-slate-600" role="status">
           <Spinner /> Checking your link…
         </div>
       )}
@@ -86,7 +86,7 @@ export default function SetPassword({ token, mode, name: initialName, onBack, on
             </button>
           ) : (
             <>
-              <p className="text-sm text-white/80">
+              <p className="text-sm text-slate-600">
                 To get a new setup link, go back and sign in with your enrollment number.
               </p>
               <button type="button" onClick={onBack} autoFocus className={primaryBtn}>
@@ -99,7 +99,7 @@ export default function SetPassword({ token, mode, name: initialName, onBack, on
 
       {state === "ready" && (
         <form onSubmit={submit} className="mt-2 space-y-3" noValidate>
-          <p className="text-sm text-white/80">
+          <p className="text-sm text-slate-600">
             {mode === "setup"
               ? `Welcome${name ? `, ${name}` : ""}. Choose a password to activate your account.`
               : `Hi${name ? ` ${name}` : ""}, choose a new password for your account.`}
@@ -126,24 +126,24 @@ export default function SetPassword({ token, mode, name: initialName, onBack, on
           <div aria-hidden={password.length === 0} className="flex items-center gap-2">
             <div className="flex flex-1 gap-1">
               {[1, 2, 3, 4].map((i) => (
-                <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${password && i <= score ? COLORS[score] : "bg-white/20"}`} />
+                <span key={i} className={`h-1.5 flex-1 rounded-full transition-colors ${password && i <= score ? COLORS[score] : "bg-slate-200"}`} />
               ))}
             </div>
-            <span className="w-14 text-right text-xs text-white/70" aria-live="polite">{password ? LABELS[score] : ""}</span>
+            <span className="w-14 text-right text-xs text-slate-600" aria-live="polite">{password ? LABELS[score] : ""}</span>
           </div>
 
           <ul id="sp-rules" className="space-y-1 text-xs">
             {checks.map((c) => (
-              <li key={c.id} className={`flex items-center gap-2 ${c.ok ? "text-emerald-300" : "text-white/65"}`}>
-                <span aria-hidden="true" className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${c.ok ? "bg-emerald-400/30" : "bg-white/10"}`}>
+              <li key={c.id} className={`flex items-center gap-2 ${c.ok ? "text-emerald-700" : "text-slate-600"}`}>
+                <span aria-hidden="true" className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${c.ok ? "bg-emerald-100" : "bg-slate-200"}`}>
                   {c.ok ? "✓" : ""}
                 </span>
                 {c.label}
                 <span className="sr-only">{c.ok ? " (met)" : " (not met)"}</span>
               </li>
             ))}
-            <li className={`flex items-center gap-2 ${matches ? "text-emerald-300" : "text-white/65"}`}>
-              <span aria-hidden="true" className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${matches ? "bg-emerald-400/30" : "bg-white/10"}`}>
+            <li className={`flex items-center gap-2 ${matches ? "text-emerald-700" : "text-slate-600"}`}>
+              <span aria-hidden="true" className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${matches ? "bg-emerald-100" : "bg-slate-200"}`}>
                 {matches ? "✓" : ""}
               </span>
               Both passwords match

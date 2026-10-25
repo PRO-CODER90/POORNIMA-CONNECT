@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import type { NavItem } from './roleNav';
 
-/** Student nav: a floating pill at the bottom of the screen on every breakpoint. */
-export default function FloatingDock({ items, isActive }: { items: NavItem[]; isActive: (item: NavItem) => boolean }) {
+/** Dock nav: a floating pill at the bottom of the screen on every breakpoint. */
+export default function FloatingDock({ items, isActive, label = 'Main navigation' }: { items: NavItem[]; isActive: (item: NavItem) => boolean; label?: string }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
       <nav
-        aria-label="Student navigation"
+        aria-label={label}
         className="pointer-events-auto flex items-center gap-1 rounded-full border border-white bg-white/95 p-2 shadow-[0_10px_40px_-10px_rgba(18,39,95,0.35)] backdrop-blur"
       >
         {items.map((item) => {
