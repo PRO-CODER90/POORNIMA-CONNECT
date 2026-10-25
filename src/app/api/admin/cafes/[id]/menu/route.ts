@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/cafe/lib/rbac';
-import { handleApi, readBody, type ApiContext } from '@/cafe/lib/api';
-import { adminListMenu, adminCreateItem } from '@/cafe/server/admin/menu';
+import { guardPost } from '@/lib/api';
+import { handleApi, readBody } from '@/cafe/lib/api';
+import { createItem, listInventory } from '@/cafe/server/inventory';
+import { adminCafeScope, param } from '@/cafe/server/inventoryScope';
 
 export const GET = handleApi(async (_req, ctx) => {
-  const admin = await requireAdmin();
-  const { id } = await ctx.params;
-  return NextResponse.json(await adminListMenu(admin, Array.isArray(id) ? id[0] : id));
+  const { scope } = await adminCafeScope(await param(ctx));
+  return NextResponse.json(await listInventory(scope.cafeId));
 });
 
 export const POST = handleApi(async (req, ctx) => {
-  const admin = await requireAdmin();
-  const { id } = await ctx.params;
-  const body = (await readBody(req)) as Record<string, unknown>;
-  const item = await adminCreateItem(admin, Array.isArray(id) ? id[0] : id, body as never);
-  return NextResponse.json({ item }, { status: 201 });
+  const refused = guardPost(req);
+  if (refused) return refused;
+  const { scope } = await adminCafeScope(await param(ctx));
+  return NextResponse.json({ item: await createItem(scope, await readBody(req)) }, { status: 201 });
 });

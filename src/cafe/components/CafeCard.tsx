@@ -14,6 +14,8 @@ export interface CafeCardData {
   closingTime: string;
   status: 'OPEN' | 'CLOSED';
   itemCount: number;
+  /** Items that can be ordered right now (excludes hidden and sold-out). */
+  availableCount?: number;
 }
 
 export const CAFE_IMAGES: Record<string, string> = {
@@ -32,6 +34,7 @@ export default function CafeCard({ cafe, showDescription = false }: { cafe: Cafe
   // "Cafe 1 · Chai Point" → "Chai Point"; the cafe number already shows in the code chip.
   const title = cafe.name.split('·').pop()!.trim();
   const opens = fmtTime12(cafe.openingTime);
+  const count = cafe.availableCount ?? cafe.itemCount;
 
   return (
     <Link
@@ -98,7 +101,7 @@ export default function CafeCard({ cafe, showDescription = false }: { cafe: Cafe
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Menu</p>
               <p className="truncate font-semibold text-ink">
-                {cafe.itemCount} item{cafe.itemCount === 1 ? '' : 's'}
+                {count} item{count === 1 ? '' : 's'}
               </p>
             </div>
           </div>

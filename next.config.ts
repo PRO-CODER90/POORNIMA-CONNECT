@@ -21,6 +21,11 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    // Product photos uploaded through the inventory screens (Vercel Blob). No wildcards beyond that host.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/menu/**" }],
+  },
   productionBrowserSourceMaps: false,
   async headers() {
     return [

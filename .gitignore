@@ -41,3 +41,4 @@ check-db.mjs
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+/public/uploads/

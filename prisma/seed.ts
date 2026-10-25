@@ -3,6 +3,7 @@
 // No accounts are created here: people sign in through the portal; staff are added in Admin > Staff.
 // The same data ships as plain SQL in scripts/cafe-seed.sql (used by `npm run db:setup`).
 import { PrismaClient } from '@prisma/client';
+import { demoImageFor } from '../src/cafe/lib/stock';
 
 const prisma = new PrismaClient();
 
@@ -34,59 +35,69 @@ const CATEGORIES = [
   ['DESSERTS', 'Something sweet'],
 ];
 
-type ItemDef = { name: string; desc: string; price: number; emoji: string; cat: number; unavail?: boolean };
+type ItemDef = { name: string; desc: string; price: number; cat: number; unavail?: boolean };
+
+// Sealed packets with counted stock (generic names on purpose; the cafe can rename them).
+type PacketDef = { name: string; desc: string; pack: string; price: number; stock: number; threshold: number; cat: number; cafes: string[] };
+const PACKETS: PacketDef[] = [
+  { name: 'Potato Chips (Classic)', desc: 'Crispy salted potato chips', pack: '52 g', price: 20, stock: 24, threshold: 5, cat: 0, cafes: ['C1', 'C2', 'C3'] },
+  { name: 'Packaged Drinking Water', desc: 'Sealed bottle, chilled', pack: '1 L', price: 20, stock: 40, threshold: 10, cat: 1, cafes: ['C1', 'C2', 'C3'] },
+  { name: 'Cream Biscuits', desc: 'Vanilla cream sandwich biscuits', pack: '60 g', price: 10, stock: 5, threshold: 5, cat: 0, cafes: ['C1', 'C3'] },
+  { name: 'Chocolate Bar', desc: 'Milk chocolate bar', pack: '40 g', price: 40, stock: 0, threshold: 3, cat: 0, cafes: ['C2'] },
+  { name: 'Fruit Juice Pack', desc: 'Mixed fruit juice with straw', pack: '200 ml', price: 25, stock: 12, threshold: 4, cat: 1, cafes: ['C2', 'C3'] },
+];
 
 const MENUS: Record<string, ItemDef[]> = {
   C1: [
-    { name: 'Masala Chai', desc: 'Strong, spiced and brewed the classic way', price: 20, emoji: '🫖', cat: 1 },
-    { name: 'Filter Coffee', desc: 'South-Indian style frothy filter coffee', price: 30, emoji: '☕', cat: 1 },
-    { name: 'Cold Coffee', desc: 'Thick, creamy and chilled', price: 60, emoji: '🥤', cat: 1 },
-    { name: 'Lime Soda', desc: 'Freshly squeezed lime with soda', price: 30, emoji: '🍋', cat: 1 },
-    { name: 'Orange Juice', desc: '100% fresh pressed, no added sugar', price: 50, emoji: '🍊', cat: 1 },
-    { name: 'Masala Chaas', desc: 'Spiced buttermilk — the ultimate refresher', price: 25, emoji: '🥛', cat: 1 },
-    { name: 'Samosa', desc: 'Crispy potato-filled snack with chutney', price: 15, emoji: '🥟', cat: 0 },
-    { name: 'Kachori', desc: 'Flaky pastry stuffed with spiced peas', price: 12, emoji: '🧆', cat: 0 },
-    { name: 'Spring Roll (Veg)', desc: 'Crunchy veggie roll, 2 pcs', price: 40, emoji: '🌯', cat: 0 },
-    { name: 'Cheese Toastie', desc: 'Grilled bread with melted cheese', price: 50, emoji: '🥪', cat: 2 },
-    { name: 'Maggi', desc: 'Street-style masala maggi', price: 40, emoji: '🍜', cat: 2 },
-    { name: 'Momos (6 pcs)', desc: 'Steamed veg momos with spicy chutney', price: 45, emoji: '🥟', cat: 2 },
-    { name: 'Dosa', desc: 'Crispy dosa with sambar and chutney', price: 40, emoji: '🫓', cat: 3 },
-    { name: 'Chole Bhature', desc: 'Puffed bhature with spicy chole, 2 pcs', price: 60, emoji: '🍛', cat: 3 },
-    { name: 'Ice Cream (2 scoops)', desc: 'Vanilla / butterscotch / mango', price: 50, emoji: '🍨', cat: 4 },
-    { name: 'Pastry', desc: 'Caramel pastry, baked fresh daily', price: 45, emoji: '🥐', cat: 4, unavail: true },
+    { name: 'Masala Chai', desc: 'Strong, spiced and brewed the classic way', price: 20, cat: 1 },
+    { name: 'Filter Coffee', desc: 'South-Indian style frothy filter coffee', price: 30, cat: 1 },
+    { name: 'Cold Coffee', desc: 'Thick, creamy and chilled', price: 60, cat: 1 },
+    { name: 'Lime Soda', desc: 'Freshly squeezed lime with soda', price: 30, cat: 1 },
+    { name: 'Orange Juice', desc: '100% fresh pressed, no added sugar', price: 50, cat: 1 },
+    { name: 'Masala Chaas', desc: 'Spiced buttermilk — the ultimate refresher', price: 25, cat: 1 },
+    { name: 'Samosa', desc: 'Crispy potato-filled snack with chutney', price: 15, cat: 0 },
+    { name: 'Kachori', desc: 'Flaky pastry stuffed with spiced peas', price: 12, cat: 0 },
+    { name: 'Spring Roll (Veg)', desc: 'Crunchy veggie roll, 2 pcs', price: 40, cat: 0 },
+    { name: 'Cheese Toastie', desc: 'Grilled bread with melted cheese', price: 50, cat: 2 },
+    { name: 'Maggi', desc: 'Street-style masala maggi', price: 40, cat: 2 },
+    { name: 'Momos (6 pcs)', desc: 'Steamed veg momos with spicy chutney', price: 45, cat: 2 },
+    { name: 'Dosa', desc: 'Crispy dosa with sambar and chutney', price: 40, cat: 3 },
+    { name: 'Chole Bhature', desc: 'Puffed bhature with spicy chole, 2 pcs', price: 60, cat: 3 },
+    { name: 'Ice Cream (2 scoops)', desc: 'Vanilla / butterscotch / mango', price: 50, cat: 4 },
+    { name: 'Pastry', desc: 'Caramel pastry, baked fresh daily', price: 45, cat: 4, unavail: true },
   ],
   C2: [
-    { name: 'Paneer Burger', desc: 'Grilled paneer patty, potato mayo', price: 80, emoji: '🍔', cat: 2 },
-    { name: 'Veg Pizza Slice', desc: 'Cheesy veg pizza, 1 slice', price: 60, emoji: '🍕', cat: 2 },
-    { name: 'French Fries', desc: 'Golden fries with peri-peri dust', price: 50, emoji: '🍟', cat: 2 },
-    { name: 'Chicken Nuggets (6)', desc: 'Crispy nuggets with two dips', price: 80, emoji: '🍗', cat: 2, unavail: true },
-    { name: 'Pav Bhaji', desc: 'Mumbai-style buttery pav bhaji', price: 60, emoji: '🍲', cat: 2 },
-    { name: 'Grilled Sandwich', desc: 'Triple-decker loaded veg sandwich', price: 50, emoji: '🥪', cat: 2 },
-    { name: 'Veg Roll', desc: 'Paratha roll with spicy aloo masala', price: 60, emoji: '🌯', cat: 2 },
-    { name: 'Cold Drink', desc: 'Cola / lemon / mango, 750ml', price: 30, emoji: '🥤', cat: 1 },
-    { name: 'Fresh Juice', desc: 'Orange / watermelon / mixed fruit', price: 60, emoji: '🧃', cat: 1 },
-    { name: 'Masala Chaas', desc: 'Chilled spiced buttermilk', price: 25, emoji: '🥛', cat: 1 },
-    { name: 'Veg Cold Coffee', desc: 'Vegan cold coffee, no dairy', price: 70, emoji: '☕', cat: 1 },
-    { name: 'Dal Tadka Thali', desc: 'Rice, 2 sabzi, dal tadka, salad', price: 90, emoji: '🍱', cat: 3 },
-    { name: 'Chole Bhature', desc: '2 bhature with chole and kachumber', price: 70, emoji: '🍛', cat: 3 },
-    { name: 'Gulab Jamun (2)', desc: 'Soft, warm and soaked in syrup', price: 30, emoji: '🍮', cat: 4 },
-    { name: 'Choco Brownie', desc: 'Fudgy brownie with walnut', price: 60, emoji: '🍫', cat: 4 },
+    { name: 'Paneer Burger', desc: 'Grilled paneer patty, potato mayo', price: 80, cat: 2 },
+    { name: 'Veg Pizza Slice', desc: 'Cheesy veg pizza, 1 slice', price: 60, cat: 2 },
+    { name: 'French Fries', desc: 'Golden fries with peri-peri dust', price: 50, cat: 2 },
+    { name: 'Chicken Nuggets (6)', desc: 'Crispy nuggets with two dips', price: 80, cat: 2, unavail: true },
+    { name: 'Pav Bhaji', desc: 'Mumbai-style buttery pav bhaji', price: 60, cat: 2 },
+    { name: 'Grilled Sandwich', desc: 'Triple-decker loaded veg sandwich', price: 50, cat: 2 },
+    { name: 'Veg Roll', desc: 'Paratha roll with spicy aloo masala', price: 60, cat: 2 },
+    { name: 'Cold Drink', desc: 'Cola / lemon / mango, 750ml', price: 30, cat: 1 },
+    { name: 'Fresh Juice', desc: 'Orange / watermelon / mixed fruit', price: 60, cat: 1 },
+    { name: 'Masala Chaas', desc: 'Chilled spiced buttermilk', price: 25, cat: 1 },
+    { name: 'Veg Cold Coffee', desc: 'Vegan cold coffee, no dairy', price: 70, cat: 1 },
+    { name: 'Dal Tadka Thali', desc: 'Rice, 2 sabzi, dal tadka, salad', price: 90, cat: 3 },
+    { name: 'Chole Bhature', desc: '2 bhature with chole and kachumber', price: 70, cat: 3 },
+    { name: 'Gulab Jamun (2)', desc: 'Soft, warm and soaked in syrup', price: 30, cat: 4 },
+    { name: 'Choco Brownie', desc: 'Fudgy brownie with walnut', price: 60, cat: 4 },
   ],
   C3: [
-    { name: 'Fresh Juice', desc: 'Seasonal fruits, no sugar added', price: 60, emoji: '🧃', cat: 1 },
-    { name: 'Fruit Salad', desc: 'Daily-cut seasonal fruits', price: 80, emoji: '🥗', cat: 1 },
-    { name: 'Lassi', desc: 'Sweet Punjabi lassi', price: 45, emoji: '🥛', cat: 1 },
-    { name: 'Cold Coffee', desc: 'Frothy café-style cold coffee', price: 70, emoji: '☕', cat: 1 },
-    { name: 'Samosa (2 pcs)', desc: 'Hot samosas with mint chutney', price: 30, emoji: '🥟', cat: 0 },
-    { name: 'Veg Spring Roll', desc: 'Hand-rolled, 2 pcs', price: 55, emoji: '🌯', cat: 0 },
-    { name: 'Salted Muffin', desc: 'Buttery sesame muffin', price: 50, emoji: '🧁', cat: 0 },
-    { name: 'Veg Burger', desc: 'Classic veggie patty burger', price: 65, emoji: '🍔', cat: 2 },
-    { name: 'Club Sandwich', desc: 'Toasted club, cut in quarters', price: 70, emoji: '🥪', cat: 2 },
-    { name: 'Maggi', desc: 'Loaded masala maggi', price: 45, emoji: '🍜', cat: 2 },
-    { name: 'Masala Dosa', desc: 'Potato masala dosa with sambar', price: 50, emoji: '🫓', cat: 3 },
-    { name: 'Veg Thali', desc: 'Rice, dal, 2 sabzi, curd, salad', price: 110, emoji: '🍱', cat: 3 },
-    { name: 'Ice Cream Cup', desc: '3 scoops of your choice', price: 45, emoji: '🍨', cat: 4 },
-    { name: 'Pastry Box', desc: 'Assorted pastry box (4 pcs)', price: 70, emoji: '🥧', cat: 4 },
+    { name: 'Fresh Juice', desc: 'Seasonal fruits, no sugar added', price: 60, cat: 1 },
+    { name: 'Fruit Salad', desc: 'Daily-cut seasonal fruits', price: 80, cat: 1 },
+    { name: 'Lassi', desc: 'Sweet Punjabi lassi', price: 45, cat: 1 },
+    { name: 'Cold Coffee', desc: 'Frothy café-style cold coffee', price: 70, cat: 1 },
+    { name: 'Samosa (2 pcs)', desc: 'Hot samosas with mint chutney', price: 30, cat: 0 },
+    { name: 'Veg Spring Roll', desc: 'Hand-rolled, 2 pcs', price: 55, cat: 0 },
+    { name: 'Salted Muffin', desc: 'Buttery sesame muffin', price: 50, cat: 0 },
+    { name: 'Veg Burger', desc: 'Classic veggie patty burger', price: 65, cat: 2 },
+    { name: 'Club Sandwich', desc: 'Toasted club, cut in quarters', price: 70, cat: 2 },
+    { name: 'Maggi', desc: 'Loaded masala maggi', price: 45, cat: 2 },
+    { name: 'Masala Dosa', desc: 'Potato masala dosa with sambar', price: 50, cat: 3 },
+    { name: 'Veg Thali', desc: 'Rice, dal, 2 sabzi, curd, salad', price: 110, cat: 3 },
+    { name: 'Ice Cream Cup', desc: '3 scoops of your choice', price: 45, cat: 4 },
+    { name: 'Pastry Box', desc: 'Assorted pastry box (4 pcs)', price: 70, cat: 4 },
   ],
 };
 
@@ -113,9 +124,19 @@ async function main() {
       await prisma.menuItem.create({
         data: {
           cafeId: cafe.id, categoryId: cats[m.cat], name: m.name, description: m.desc,
-          price: m.price, emoji: m.emoji, isAvailable: !m.unavail,
+          price: m.price, imageUrl: demoImageFor(CATEGORIES[m.cat][0]), isAvailable: !m.unavail,
         },
       });
+    }
+    for (const p of PACKETS.filter((x) => x.cafes.includes(c.code))) {
+      const item = await prisma.menuItem.create({
+        data: {
+          cafeId: cafe.id, categoryId: cats[p.cat], name: p.name, description: p.desc, price: p.price,
+          imageUrl: demoImageFor(null, 'PACKET'), itemType: 'PACKET', packSize: p.pack,
+          sku: `PKT-${p.name.split(' ')[0].toUpperCase()}`, stockQty: p.stock, lowStockThreshold: p.threshold,
+        },
+      });
+      await prisma.stockMovement.create({ data: { menuItemId: item.id, cafeId: cafe.id, delta: p.stock, qtyAfter: p.stock, reason: 'INITIAL' } });
     }
   }
   const items = await prisma.menuItem.count();

@@ -6,13 +6,14 @@ import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { ErrorNote, Skeleton } from '@/cafe/components/ui';
 import { inr } from '@/cafe/lib/money';
 import { fmtDateTime, fmtTime } from '@/cafe/lib/dates';
+import { ProductThumb } from '@/cafe/components/ProductImage';
 
 export interface FullOrder {
   id: string;
   orderNumber: string;
   cafe: { id: string; code: string; name: string };
   student: { name: string; studentCode: string } | null;
-  items: { id: string; name: string; emoji: string; quantity: number; unitPrice: number; subtotal: number }[];
+  items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   itemCount: number;
   paymentMethod: string;
@@ -182,9 +183,7 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
           <div className="mt-4 divide-y divide-slate-100">
             {o.items.map((i) => (
               <div key={i.id} className="flex items-center gap-3 py-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-100 bg-pu-50/60 text-lg">
-                  {i.emoji}
-                </div>
+                <ProductThumb src={i.imageUrl} name={i.name} className="h-10 w-10" />
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-semibold text-ink">{i.name}</div>
                   <div className="font-mono text-[11px] text-slate-400">

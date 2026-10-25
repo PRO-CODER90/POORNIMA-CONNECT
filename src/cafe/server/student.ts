@@ -7,6 +7,8 @@ import { dateFilter, dateKey, dayEnd, dayStart, lastNDaysRange, thisMonthRange, 
 import { inr } from '@/cafe/lib/money';
 import { requireStudent, type AuthedStudent } from '@/cafe/lib/rbac';
 import { orderInclude, toOrderDto } from './orders';
+import { canOrder } from '@/cafe/lib/stock';
+import { liveStock, stockEtag, toMenuItemDto, type LiveStock, type MenuItemDto } from '@/cafe/lib/liveStock';
 
 // ─────────────────────────────── cafes (student view) ───────────────────────────────
 
@@ -31,7 +33,7 @@ export async function listCafesForStudent() {
     where: { isActive: true },
     orderBy: { code: 'asc' },
     include: {
-      menuItems: { where: { isActive: true }, select: { id: true, isAvailable: true } },
+      menuItems: { where: { isActive: true }, select: { id: true, isAvailable: true, itemType: true, stockQty: true, lowStockThreshold: true, expiryDate: true } },
     },
   });
   return cafes.map((c) => ({
@@ -47,16 +49,15 @@ export async function listCafesForStudent() {
     status: cafeOpenState(c),
     isActive: c.isActive,
     itemCount: c.menuItems.length,
-    availableCount: c.menuItems.filter((m) => m.isAvailable).length,
+    availableCount: c.menuItems.filter((m) => canOrder(m)).length,
   })) satisfies CafeDto[];
 }
 
+export type { MenuItemDto, LiveStock } from '@/cafe/lib/liveStock';
+
 export interface MenuCafeDto extends CafeDto {
   categories: { id: string; name: string; sortOrder: number }[];
-  items: {
-    id: string; name: string; description: string; price: number; emoji: string;
-    categoryId: string; isAvailable: boolean;
-  }[];
+  items: MenuItemDto[];
 }
 
 export async function getCafeWithMenu(cafeIdOrCode: string) {
@@ -64,23 +65,40 @@ export async function getCafeWithMenu(cafeIdOrCode: string) {
     where: { OR: [{ id: cafeIdOrCode }, { code: cafeIdOrCode.toUpperCase() }], isActive: true },
     include: {
       categories: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-      menuItems: { where: { isActive: true }, include: { category: { select: { id: true, name: true } } } },
+      menuItems: { where: { isActive: true }, include: { category: { select: { name: true } } }, orderBy: { createdAt: 'asc' } },
     },
   });
   if (!cafe) return null;
+  const items = cafe.menuItems.map(toMenuItemDto);
   return {
     id: cafe.id, code: cafe.code, name: cafe.name, description: cafe.description,
     location: cafe.location, coverEmoji: cafe.coverEmoji, imageUrl: cafe.imageUrl,
     openingTime: cafe.openingTime, closingTime: cafe.closingTime,
     status: cafeOpenState(cafe), isActive: cafe.isActive,
-    itemCount: cafe.menuItems.length, availableCount: cafe.menuItems.filter((m) => m.isAvailable).length,
+    itemCount: items.length, availableCount: items.filter((i) => i.stock.available).length,
     categories: cafe.categories.map((c) => ({ id: c.id, name: c.name, sortOrder: c.sortOrder })),
-    items: cafe.menuItems.map((m) => ({
-      id: m.id, name: m.name, description: m.description, price: m.price, emoji: m.emoji,
-      categoryId: m.categoryId, isAvailable: m.isAvailable,
-    })),
+    items,
   } satisfies MenuCafeDto;
 }
+
+/** Live stock + availability for one cafe's menu, with a content ETag so unchanged polls are 304s. */
+export async function cafeStock(cafeIdOrCode: string): Promise<{ etag: string; body: { asOf: number; items: Record<string, LiveStock> } } | null> {
+  const cafe = await prisma.cafe.findFirst({
+    where: { OR: [{ id: cafeIdOrCode }, { code: cafeIdOrCode.toUpperCase() }], isActive: true },
+    select: {
+      menuItems: {
+        where: { isActive: true },
+        select: { id: true, isAvailable: true, itemType: true, stockQty: true, lowStockThreshold: true, expiryDate: true },
+        orderBy: { id: 'asc' },
+      },
+    },
+  });
+  if (!cafe) return null;
+  const items: Record<string, LiveStock> = {};
+  for (const m of cafe.menuItems) items[m.id] = liveStock(m);
+  return { etag: stockEtag(items), body: { asOf: Date.now(), items } };
+}
+
 
 // ─────────────────────────────── dashboard stats ───────────────────────────────
 

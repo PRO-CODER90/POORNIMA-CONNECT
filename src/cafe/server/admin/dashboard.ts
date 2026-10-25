@@ -126,7 +126,7 @@ export async function adminCafeDetail(_admin: AuthedAdmin, cafeId: string) {
   const [todayOrders, allOrders, itemAgg, catAgg, daily, monthly] = await Promise.all([
     prisma.order.findMany({ where: { cafeId, createdAt: today }, select: { totalAmount: true, orderStatus: true, paymentStatus: true, itemCount: true } }),
     prisma.order.findMany({ where: { cafeId }, select: { totalAmount: true, orderStatus: true, paymentStatus: true, createdAt: true, itemCount: true } }),
-    prisma.orderItem.groupBy({ by: ['itemName', 'emoji'], where: { order: { cafeId, orderStatus: { not: 'CANCELLED' } } }, _sum: { subtotal: true, quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 8 }),
+    prisma.orderItem.groupBy({ by: ['itemName'], where: { order: { cafeId, orderStatus: { not: 'CANCELLED' } } }, _sum: { subtotal: true, quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 8 }),
     prisma.orderItem.findMany({
       where: { order: { cafeId, orderStatus: { not: 'CANCELLED' } } },
       select: { subtotal: true, quantity: true, menuItem: { select: { category: { select: { name: true } } } } },
@@ -170,7 +170,7 @@ export async function adminCafeDetail(_admin: AuthedAdmin, cafeId: string) {
       allTime: { orders: allRecon.validOrders, revenue: allRecon.expectedCash, collected: allRecon.collectedCash, pending: allRecon.pendingCash, items: allOrders.filter((o) => o.orderStatus !== 'CANCELLED').reduce((a, o) => a + o.itemCount, 0) },
       itemCount: cafe.menuItems.length,
     },
-    popularItems: itemAgg.map((i) => ({ name: i.itemName, emoji: i.emoji, quantity: i._sum?.quantity ?? 0, revenue: i._sum?.subtotal ?? 0 })),
+    popularItems: itemAgg.map((i) => ({ name: i.itemName, quantity: i._sum?.quantity ?? 0, revenue: i._sum?.subtotal ?? 0 })),
     categorySales: [...catMap.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.total - a.total),
     dailySales: [...dayMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => ({ date, value })),
     monthlySales: [...monthMap.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, value]) => ({ month, value })),

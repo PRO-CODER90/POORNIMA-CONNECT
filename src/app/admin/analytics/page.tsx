@@ -72,7 +72,7 @@ export default async function AdminAnalyticsPage() {
           <tbody>
             {d.byItem.slice(0, 15).map((i) => (
               <tr key={i.name} className="border-b border-slate-50">
-                <td className="px-4 py-2.5 font-semibold">{i.emoji} {i.name}</td>
+                <td className="px-4 py-2.5 font-semibold">{i.name}</td>
                 <td className="px-4 py-2.5 text-right font-semibold">{i.quantity}</td>
                 <td className="px-4 py-2.5 text-right font-black">{inr(i.revenue)}</td>
               </tr>

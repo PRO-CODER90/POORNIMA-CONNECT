@@ -13,6 +13,7 @@ import CartFab from '@/cafe/components/cart/CartFab';
 import CartDrawer from '@/cafe/components/cart/CartDrawer';
 import RoleShell from '@/cafe/components/layout/RoleShell';
 import { cafeImage } from '@/cafe/components/CafeCard';
+import { getCafeWithMenu } from '@/cafe/server/student';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +31,7 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
     }),
     prisma.cafe.findFirst({
       where: { OR: [{ id }, { code: id.toUpperCase() }], isActive: true },
-      include: {
-        categories: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-        menuItems: { where: { isActive: true } },
-      },
+      select: { id: true, code: true, name: true, description: true, location: true, openingTime: true, closingTime: true, manualStatus: true, isActive: true },
     }),
   ]);
 
@@ -50,26 +48,14 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
         ? 'today, as cafes are closed on Sundays'
         : `until ${fmtTime12(cafe.openingTime)}`;
 
+  const menu = (await getCafeWithMenu(cafe.id))!;
   const browser = {
-    id: cafe.id,
-    code: cafe.code,
-    name: cafe.name,
-    description: cafe.description,
-    location: cafe.location,
-    coverEmoji: cafe.coverEmoji,
-    openingTime: cafe.openingTime,
-    closingTime: cafe.closingTime,
-    status: openState,
-    categories: cafe.categories.map((c) => ({ id: c.id, name: c.name, sortOrder: c.sortOrder })),
-    items: cafe.menuItems.map((m) => ({
-      id: m.id,
-      name: m.name,
-      description: m.description,
-      price: m.price,
-      emoji: m.emoji,
-      categoryId: m.categoryId,
-      isAvailable: m.isAvailable,
-    })),
+    id: menu.id,
+    code: menu.code,
+    name: menu.name,
+    status: menu.status,
+    categories: menu.categories,
+    items: menu.items,
   };
 
   return (
@@ -150,7 +136,7 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
               <div>
                 <h2 className="text-xl font-bold text-ink">Cafe Menu</h2>
                 <p className="text-sm text-muted">
-                  {cafe.menuItems.length} items available · Pay cash at counter
+                  {menu.availableCount} items available · Pay cash at counter
                 </p>
               </div>
             </div>

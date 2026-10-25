@@ -8,12 +8,13 @@ import { StatCard, EmptyState, ErrorNote, Modal, Spinner } from '@/cafe/componen
 import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import { fmtTime } from '@/cafe/lib/dates';
+import { ProductThumb } from '@/cafe/components/ProductImage';
 
 interface OrderRow {
   id: string;
   orderNumber: string;
   student: { name: string; studentCode: string } | null;
-  items: { id: string; name: string; emoji: string; quantity: number; unitPrice: number; subtotal: number }[];
+  items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   itemCount: number;
   paymentStatus: string;
@@ -190,9 +191,7 @@ export default function StaffDashboard() {
             <button key={o.id} onClick={() => { setDetail(o); setError(null); }} className="card block w-full p-4 text-left transition-shadow hover:shadow-md">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl" aria-hidden>
-                    {o.items[0]?.emoji ?? '🍽️'}
-                  </div>
+                  <ProductThumb src={o.items[0]?.imageUrl} name={o.items[0]?.name ?? 'Order'} className="h-11 w-11 rounded-xl" />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs font-black text-slate-900">{o.orderNumber}</span>
@@ -284,7 +283,7 @@ function OrderActions({
       <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-100">
         {order.items.map((i) => (
           <div key={i.id} className="flex items-center gap-3 px-3 py-2.5 text-sm">
-            <span className="text-xl" aria-hidden>{i.emoji}</span>
+            <ProductThumb src={i.imageUrl} name={i.name} className="h-9 w-9" />
             <div className="flex-1 font-semibold text-slate-800">{i.name}</div>
             <div className="text-xs text-slate-400">{i.quantity} × {inr(i.unitPrice)}</div>
             <div className="w-16 text-right font-bold">{inr(i.subtotal)}</div>

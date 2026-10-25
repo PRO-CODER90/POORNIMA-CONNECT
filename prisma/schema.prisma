@@ -63,7 +63,7 @@ model CafeStaff {
   updatedAt      DateTime @updatedAt
 
   completedOrders Order[] @relation("CompletedByStaff")
-  paidOrders    Order[] @relation("PaidByStaff")
+  paidOrders      Order[] @relation("PaidByStaff")
 }
 
 model Admin {
@@ -123,84 +123,115 @@ model MenuItem {
   name        String
   description String   @default("")
   price       Int // INR (integer rupees) — current menu price
-  emoji       String   @default("🍽️")
+  emoji       String   @default("🍽️") // legacy: no longer read or written by the app
   imageUrl    String?
   isAvailable Boolean  @default(true)
   isActive    Boolean  @default(true) // soft delete
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orderItems OrderItem[]
+  itemType          String    @default("PREPARED") // PREPARED | PACKET
+  isVeg             Boolean   @default(true)
+  packSize          String? // "52 g", "1 L" (packets)
+  mrp               Int? // printed MRP in whole rupees (packets)
+  sku               String? // barcode / internal code (packets)
+  stockQty          Int? // NULL for PREPARED, >= 0 for PACKET
+  lowStockThreshold Int       @default(5)
+  expiryDate        DateTime? // best-before (packets)
+
+  orderItems     OrderItem[]
+  stockMovements StockMovement[]
+
+  @@unique([cafeId, sku])
+  @@index([cafeId, itemType, stockQty])
+}
+
+model StockMovement {
+  id          String   @id @default(cuid())
+  menuItemId  String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  cafeId      String
+  delta       Int // +10 restock, -2 sale
+  qtyAfter    Int
+  reason      String // INITIAL | SALE | CANCEL_RESTOCK | RESTOCK | ADJUST | WASTAGE | EXPIRED
+  orderId     String?
+  actorUserId String? // cafe User.id of staff/admin
+  note        String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([menuItemId, createdAt])
+  @@index([cafeId, createdAt])
 }
 
 // ─────────────────────────────── ORDERS / PAYMENTS ───────────────────────────────
 
 model Order {
-  id             String    @id @default(cuid())
-  orderNumber    String    @unique // PU-C1-20260927-0001
-  studentId      String
-  student        Student   @relation(fields: [studentId], references: [id])
-  cafeId         String
-  cafe           Cafe      @relation(fields: [cafeId], references: [id])
-  totalAmount    Int // server-calculated, never trusted from client
-  itemCount      Int       @default(0)
-  paymentMethod  String    @default("CASH")
-  paymentStatus  String    @default("PENDING") // PENDING | PAID
-  orderStatus    String    @default("PLACED") // PLACED|ACCEPTED|PREPARING|READY|COMPLETED|CANCELLED
-  cancelReason   String?
-  createdAt      DateTime  @default(now())
-  acceptedAt     DateTime?
-  preparingAt    DateTime?
-  readyAt        DateTime?
-  completedAt    DateTime?
-  completedById  String?
-  completedBy    CafeStaff? @relation("CompletedByStaff", fields: [completedById], references: [id])
-  paidAt         DateTime?
-  paidByStaffId  String? // CafeStaff.id — who confirmed the cash
-  paidByStaff    CafeStaff? @relation("PaidByStaff", fields: [paidByStaffId], references: [id])
-  updatedAt      DateTime  @updatedAt
+  id            String     @id @default(cuid())
+  orderNumber   String     @unique // PU-C1-20260927-0001
+  studentId     String
+  student       Student    @relation(fields: [studentId], references: [id])
+  cafeId        String
+  cafe          Cafe       @relation(fields: [cafeId], references: [id])
+  totalAmount   Int // server-calculated, never trusted from client
+  itemCount     Int        @default(0)
+  paymentMethod String     @default("CASH")
+  paymentStatus String     @default("PENDING") // PENDING | PAID
+  orderStatus   String     @default("PLACED") // PLACED|ACCEPTED|PREPARING|READY|COMPLETED|CANCELLED
+  cancelReason  String?
+  createdAt     DateTime   @default(now())
+  acceptedAt    DateTime?
+  preparingAt   DateTime?
+  readyAt       DateTime?
+  completedAt   DateTime?
+  completedById String?
+  completedBy   CafeStaff? @relation("CompletedByStaff", fields: [completedById], references: [id])
+  paidAt        DateTime?
+  paidByStaffId String? // CafeStaff.id — who confirmed the cash
+  paidByStaff   CafeStaff? @relation("PaidByStaff", fields: [paidByStaffId], references: [id])
+  updatedAt     DateTime   @updatedAt
 
-  items    OrderItem[]
-  payment  Payment?
+  items   OrderItem[]
+  payment Payment?
 }
 
 model OrderItem {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   orderId    String
-  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   itemName   String // snapshot — survives menu edits
   quantity   Int
   unitPrice  Int // snapshot of the price AT ORDER TIME
   subtotal   Int
-  emoji      String  @default("🍽️")
+  emoji      String   @default("🍽️") // legacy
+  imageUrl   String? // product image at order time
 }
 
 model Payment {
-  id                 String    @id @default(cuid())
-  orderId            String    @unique
-  order              Order     @relation(fields: [orderId], references: [id])
-  method             String    @default("CASH")
-  amount             Int
-  status             String    @default("PENDING") // PENDING | PAID
-  receivedAt         DateTime?
-  receivedByStaffId  String?
-  createdAt          DateTime  @default(now())
+  id                String    @id @default(cuid())
+  orderId           String    @unique
+  order             Order     @relation(fields: [orderId], references: [id])
+  method            String    @default("CASH")
+  amount            Int
+  status            String    @default("PENDING") // PENDING | PAID
+  receivedAt        DateTime?
+  receivedByStaffId String?
+  createdAt         DateTime  @default(now())
 }
 
 // ─────────────────────────────── NOTIFICATIONS / AUDIT ───────────────────────────────
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
   title     String
   message   String
   type      String // ORDER | PAYMENT | SYSTEM
-  isRead    Boolean  @default(false)
+  isRead    Boolean   @default(false)
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId, isRead])
 }

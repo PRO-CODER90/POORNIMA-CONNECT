@@ -12,10 +12,14 @@
     "db:setup": "node --env-file-if-exists=.env.local scripts/db-setup.mjs",
     "postinstall": "prisma generate",
     "db:seed:cafes": "tsx prisma/seed.ts",
-    "db:reset:students": "tsx scripts/reset-student-data.ts"
+    "db:reset:students": "tsx scripts/reset-student-data.ts",
+    "db:backfill:images": "tsx scripts/backfill-demo-images.ts",
+    "verify:stock": "tsx scripts/verify-stock.ts",
+    "make:demo-images": "node scripts/make-demo-images.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "@vercel/blob": "^2.8.2",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.12",
     "lucide-react": "^0.511.0",
@@ -26,6 +30,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^2.15.4",
+    "sharp": "^0.35.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {

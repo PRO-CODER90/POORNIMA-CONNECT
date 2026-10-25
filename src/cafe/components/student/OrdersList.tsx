@@ -12,7 +12,7 @@ export interface OrderLite {
   id: string;
   orderNumber: string;
   cafe: { id: string; code: string; name: string };
-  items: { id: string; name: string; emoji: string; quantity: number; unitPrice: number; subtotal: number }[];
+  items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   paymentStatus: string;
   orderStatus: string;
