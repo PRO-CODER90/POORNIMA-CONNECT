@@ -2,11 +2,11 @@ import { requireStudentPage } from '@/cafe/lib/rbac';
 import { studentDashboard } from '@/cafe/server/student';
 import CafeCard from '@/cafe/components/CafeCard';
 import PartnerBrand from '@/cafe/components/student/PartnerBrand';
+import { ArchPhoto, PalaceSketch, StreetLamp } from '@/cafe/components/student/HeroScene';
 import { StatCard, EmptyState } from '@/cafe/components/ui';
 import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import { timeAgo } from '@/cafe/lib/dates';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Coffee, ShoppingBag, ShoppingCart, ClipboardList, TrendingUp, Wallet, ArrowRight, ChevronRight } from 'lucide-react';
 
@@ -20,28 +20,23 @@ export default async function StudentDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <section aria-label="Welcome" className="relative -mx-4 overflow-hidden px-4 sm:mx-0 sm:px-0">
-        {/* mobile: a cropped strip of the campus behind the welcome text */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 lg:hidden" aria-hidden>
-          <Image
-            src="/brand/hero-campus.webp"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover opacity-60 [mask-image:linear-gradient(to_bottom,black_30%,transparent)]"
-          />
-        </div>
+      <section
+        aria-label="Welcome"
+        className="relative isolate overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(115deg,#fdf6ec_0%,#fcefe2_55%,#fbe6d8_100%)] shadow-[0_10px_40px_-24px_rgba(160,90,40,0.35)]"
+      >
+        <PalaceSketch className="pointer-events-none absolute -bottom-6 -left-10 -z-10 w-[26rem] opacity-80 sm:w-[30rem]" />
+        <PalaceSketch className="pointer-events-none absolute -right-24 bottom-6 -z-10 hidden w-[22rem] opacity-50 lg:block" />
 
-        <div className="relative grid items-center gap-6 pt-24 lg:grid-cols-[1fr_auto] lg:pt-0">
-          <div className="min-w-0 lg:py-10">
-            <h1 className="text-4xl font-bold tracking-tight text-ink lg:text-5xl">
+        <div className="grid min-h-[17rem] items-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:min-h-[21rem]">
+          <div className="relative z-10 order-2 min-w-0 px-6 pb-16 pt-2 sm:px-10 lg:order-1 lg:pb-14 lg:pt-0">
+            <h1 className="text-4xl font-bold tracking-tight text-pu-900 lg:text-5xl">
               Welcome,{' '}
-              <span className="break-words text-pu-600" title={student.name}>
+              <span className="break-words text-pink-600" title={student.name}>
                 {student.name}
               </span>{' '}
               <span aria-hidden>👋</span>
             </h1>
-            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink/70">
               <span>
                 Student ID: <b className="font-semibold text-ink">{student.studentCode}</b>
               </span>
@@ -50,24 +45,16 @@ export default async function StudentDashboardPage() {
             </p>
           </div>
 
-          {/* desktop: campus illustration + optional partner slot */}
-          <div className="hidden items-center gap-4 lg:flex" aria-hidden>
-            <div className="relative h-52 w-[30rem]">
-              <Image
-                src="/brand/hero-campus.webp"
-                alt=""
-                fill
-                sizes="480px"
-                className="rounded-[2rem] object-cover [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_72%)]"
-              />
-            </div>
+          <div className="relative order-1 flex h-56 items-end justify-center self-stretch sm:h-64 lg:order-2 lg:h-full">
+            <ArchPhoto className="h-full w-auto max-w-full translate-y-px lg:absolute lg:bottom-0 lg:right-16 lg:h-[94%]" />
+            <StreetLamp className="absolute bottom-0 right-2 hidden h-[78%] lg:block" />
             <PartnerBrand />
           </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section aria-label="Student overview metrics" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section aria-label="Student overview metrics" className="relative z-10 -mt-20 grid grid-cols-2 gap-4 px-3 sm:px-6 lg:-mt-16 lg:grid-cols-4">
         <StatCard
           label="Today's Spending"
           value={inr(d.stats.todaySpending)}
