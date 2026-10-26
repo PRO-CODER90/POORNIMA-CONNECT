@@ -33,7 +33,7 @@ export default function DockShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="cafe-page relative min-h-screen text-ink">
+    <div className="cafe-page relative min-h-screen overflow-x-clip text-ink">
       <TopBar
         title={title}
         subtitle={subtitle}
