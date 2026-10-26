@@ -39,42 +39,69 @@ function rng(seed: number) {
   };
 }
 
-const PINKS = ['#e83e8c', '#f0619a', '#d6246e', '#f78fb7', '#ec4f8f'];
-const LEAVES = ['#4f8a3c', '#3f7a33', '#6aa04f'];
+const PINK_IDS = ['a', 'b', 'c'];
+const LEAVES = ['#3f7a33', '#4f8a3c', '#2f6a2b', '#5e9a46'];
 
-/** A spray of bougainvillea: leaves underneath, papery three-bract flowers on top. */
-function Bougainvillea({ cx, cy, rx, ry, n, seed }: { cx: number; cy: number; rx: number; ry: number; n: number; seed: number }) {
+/** Gradients for the bracts; render once inside each SVG that draws flowers. */
+function FlowerDefs({ uid }: { uid: string }) {
+  return (
+    <>
+      <radialGradient id={`${uid}-bv-a`} cx="0.5" cy="0.35" r="0.75">
+        <stop offset="0" stopColor="#ffd1e3" />
+        <stop offset="0.45" stopColor="#f2559a" />
+        <stop offset="1" stopColor="#c8185f" />
+      </radialGradient>
+      <radialGradient id={`${uid}-bv-b`} cx="0.5" cy="0.35" r="0.75">
+        <stop offset="0" stopColor="#ffe0ec" />
+        <stop offset="0.5" stopColor="#f77fb0" />
+        <stop offset="1" stopColor="#de3a80" />
+      </radialGradient>
+      <radialGradient id={`${uid}-bv-c`} cx="0.5" cy="0.35" r="0.75">
+        <stop offset="0" stopColor="#ffc2da" />
+        <stop offset="0.5" stopColor="#e93d88" />
+        <stop offset="1" stopColor="#b3124f" />
+      </radialGradient>
+    </>
+  );
+}
+
+/** One papery bract: a rounded heart shape with a centre vein. */
+const BRACT = 'M0 0 C-7 -3 -9 -12 -4 -16 C-1 -18 1 -18 4 -16 C9 -12 7 -3 0 0 Z';
+
+/** A spray of bougainvillea: leaves underneath, three-bract flowers on top. */
+function Bougainvillea({ uid, cx, cy, rx, ry, n, seed, size = 1 }: { uid: string; cx: number; cy: number; rx: number; ry: number; n: number; seed: number; size?: number }) {
   const r = rng(seed);
   const pos = () => {
     const a = r() * Math.PI * 2;
     const d = Math.sqrt(r());
     return [cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d] as const;
   };
-  const leaves = Array.from({ length: Math.round(n * 0.7) }, (_, i) => {
+  const leaves = Array.from({ length: Math.round(n * 0.55) }, (_, i) => {
     const [x, y] = pos();
+    const k = size * (0.9 + r() * 0.5);
     return (
-      <ellipse
+      <path
         key={`l${i}`}
-        cx={x}
-        cy={y}
-        rx={6 + r() * 4}
-        ry={2.8 + r() * 1.6}
-        transform={`rotate(${Math.round(r() * 180)} ${x.toFixed(1)} ${y.toFixed(1)})`}
+        d="M0 0 C6 -6 16 -6 22 0 C16 6 6 6 0 0 Z"
+        transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${Math.round(r() * 360)}) scale(${k.toFixed(2)})`}
         fill={LEAVES[i % LEAVES.length]}
       />
     );
   });
   const flowers = Array.from({ length: n }, (_, i) => {
     const [x, y] = pos();
-    const s = 3.2 + r() * 2.6;
+    const k = size * (0.75 + r() * 0.6);
     const rot = r() * 120;
-    const fill = PINKS[Math.floor(r() * PINKS.length)];
+    const fill = `url(#${uid}-bv-${PINK_IDS[Math.floor(r() * PINK_IDS.length)]})`;
     return (
-      <g key={`f${i}`} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)})`} fill={fill}>
-        <circle cx={0} cy={-s * 0.6} r={s} />
-        <circle cx={s * 0.55} cy={s * 0.35} r={s} />
-        <circle cx={-s * 0.55} cy={s * 0.35} r={s} />
-        <circle r={s * 0.35} fill="#fde7ef" />
+      <g key={`f${i}`} transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)}) scale(${k.toFixed(2)})`}>
+        {[0, 120, 240].map((a) => (
+          <g key={a} transform={`rotate(${a})`}>
+            <path d={BRACT} fill={fill} />
+            <path d="M0 -1 V-13" stroke="#b0104e" strokeOpacity={0.35} strokeWidth={0.6} />
+          </g>
+        ))}
+        <circle r={1.6} fill="#fff7d6" />
       </g>
     );
   });
@@ -83,6 +110,25 @@ function Bougainvillea({ cx, cy, rx, ry, n, seed }: { cx: number; cy: number; rx
       {leaves}
       {flowers}
     </g>
+  );
+}
+
+/** Line-art clouds and a few birds for the empty sky on the left of the hero. */
+export function SkySketch({ className = '' }: { className?: string }) {
+  const cloud = (x: number, y: number, s: number) => (
+    <path
+      key={`${x}-${y}`}
+      transform={`translate(${x} ${y}) scale(${s})`}
+      d="M0 20 C-2 10 8 4 16 8 C18 -2 34 -4 38 6 C46 2 56 8 54 18 C60 20 60 28 52 28 H4 C-4 28 -6 22 0 20 Z"
+    />
+  );
+  return (
+    <svg viewBox="0 0 520 140" fill="none" stroke={PALACE_STROKE} strokeWidth={1.3} strokeLinecap="round" className={className} aria-hidden>
+      {cloud(20, 30, 1.1)}
+      {cloud(250, 10, 1.3)}
+      {cloud(420, 60, 0.9)}
+      <path d="M150 60 q6 -6 12 0 q6 -6 12 0 M190 40 q5 -5 10 0 q5 -5 10 0 M120 90 q4 -4 8 0 q4 -4 8 0" />
+    </svg>
   );
 }
 
@@ -142,41 +188,60 @@ export function StreetLamp({ className = '' }: { className?: string }) {
   );
 }
 
-const ARCH_W = 380;
-const ARCH_H = 300;
-const ARCH_D = archPath(ARCH_W, ARCH_H);
+const ARCH_W = 560;
+const ARCH_H = 330;
+const ARCH_D = archPath(ARCH_W, ARCH_H, 6);
 
-/** Campus photo in the jharokha arch with bougainvillea around its edges. */
-export function ArchPhoto({ className = '' }: { className?: string }) {
+/** Campus photo in the cusped jharokha arch, framed by bougainvillea. `uid` must be unique per instance. */
+export function ArchPhoto({ className = '', uid = 'arch' }: { className?: string; uid?: string }) {
   // The flowers spill past the arch, so the SVG canvas is padded around it.
-  const pad = { l: 70, r: 50, t: 20, b: 0 };
+  const pad = { l: 70, r: 30, t: 24, b: 0 };
+  const B = (p: Omit<Parameters<typeof Bougainvillea>[0], 'uid'>) => <Bougainvillea uid={uid} {...p} />;
   return (
     <svg
       viewBox={`${-pad.l} ${-pad.t} ${ARCH_W + pad.l + pad.r} ${ARCH_H + pad.t + pad.b}`}
       className={className}
+      preserveAspectRatio="xMidYMax meet"
       aria-hidden
     >
       <defs>
-        <clipPath id="hero-arch">
+        <clipPath id={`${uid}-clip`}>
           <path d={ARCH_D} />
         </clipPath>
+        <FlowerDefs uid={uid} />
       </defs>
-      <path d={ARCH_D} fill="#fff" transform="translate(-6 -6) scale(1.032)" opacity={0.9} />
+      <path d={ARCH_D} fill="#fff" transform="translate(-6 -6) scale(1.022)" opacity={0.95} />
       <image
         href="/brand/hero-campus.webp"
-        x={-40}
-        y={10}
-        width={470}
-        height={296}
+        x={-10}
+        y={-4}
+        width={ARCH_W + 20}
+        height={ARCH_H + 8}
         preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#hero-arch)"
+        clipPath={`url(#${uid}-clip)`}
       />
-      <path d={ARCH_D} fill="none" stroke="#e98a4b" strokeWidth={4} strokeLinejoin="round" />
-      {/* bougainvillea: big spray down the left jamb, a small one at the crown, some on the right */}
-      <Bougainvillea cx={-6} cy={150} rx={56} ry={110} n={120} seed={7} />
-      <Bougainvillea cx={36} cy={52} rx={34} ry={26} n={34} seed={11} />
-      <Bougainvillea cx={150} cy={4} rx={20} ry={12} n={14} seed={23} />
-      <Bougainvillea cx={ARCH_W + 6} cy={250} rx={46} ry={46} n={60} seed={31} />
+      <path d={ARCH_D} fill="none" stroke="#f4a3c4" strokeWidth={3} strokeLinejoin="round" />
+      {/* sprays hug the outside of the arch: left jamb, along the crown, top-right corner, right side */}
+      {B({ cx: -34, cy: 200, rx: 36, ry: 150, n: 150, seed: 7, size: 0.62 })}
+      {B({ cx: 6, cy: 96, rx: 40, ry: 50, n: 60, seed: 11, size: 0.6 })}
+      {B({ cx: 70, cy: 30, rx: 50, ry: 26, n: 46, seed: 23, size: 0.55 })}
+      {B({ cx: 190, cy: 2, rx: 46, ry: 14, n: 24, seed: 5, size: 0.5 })}
+      {B({ cx: ARCH_W - 50, cy: 6, rx: 70, ry: 26, n: 60, seed: 17, size: 0.6 })}
+      {B({ cx: ARCH_W + 4, cy: 130, rx: 22, ry: 110, n: 70, seed: 31, size: 0.55 })}
+    </svg>
+  );
+}
+
+/** Loose sprays for the left edge of the banner. */
+export function EdgeFlowers({ className = '', uid = 'edge' }: { className?: string; uid?: string }) {
+  return (
+    <svg viewBox="0 0 90 420" className={className} aria-hidden>
+      <defs>
+        <FlowerDefs uid={uid} />
+      </defs>
+      <Bougainvillea uid={uid} cx={8} cy={60} rx={34} ry={50} n={40} seed={41} size={0.6} />
+      <Bougainvillea uid={uid} cx={0} cy={250} rx={36} ry={70} n={50} seed={43} size={0.6} />
+      <Bougainvillea uid={uid} cx={24} cy={390} rx={34} ry={30} n={26} seed={47} size={0.6} />
     </svg>
   );
 }

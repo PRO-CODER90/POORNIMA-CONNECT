@@ -1,8 +1,7 @@
 import { requireStudentPage } from '@/cafe/lib/rbac';
 import { studentDashboard } from '@/cafe/server/student';
 import CafeCard from '@/cafe/components/CafeCard';
-import PartnerBrand from '@/cafe/components/student/PartnerBrand';
-import { ArchPhoto, PalaceSketch, StreetLamp } from '@/cafe/components/student/HeroScene';
+import DashboardHero from '@/cafe/components/student/DashboardHero';
 import { StatCard, EmptyState } from '@/cafe/components/ui';
 import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
@@ -22,39 +21,7 @@ export default async function StudentDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Hero */}
-      <section
-        aria-label="Welcome"
-        className="relative isolate overflow-hidden rounded-[28px] border border-white/80 bg-[linear-gradient(115deg,#fdf6ec_0%,#fcefe2_55%,#fbe6d8_100%)] shadow-[0_10px_40px_-24px_rgba(160,90,40,0.35)]"
-      >
-        <PalaceSketch className="pointer-events-none absolute -bottom-6 -left-10 -z-10 w-[26rem] opacity-80 sm:w-[30rem]" />
-        <PalaceSketch className="pointer-events-none absolute -right-24 bottom-6 -z-10 hidden w-[22rem] opacity-50 lg:block" />
-
-        <div className="grid min-h-[17rem] items-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:min-h-[21rem]">
-          <div className="relative z-10 order-2 min-w-0 px-6 pb-16 pt-2 sm:px-10 lg:order-1 lg:pb-14 lg:pt-0">
-            <h1 className="text-4xl font-bold tracking-tight text-pu-900 lg:text-5xl">
-              Welcome,{' '}
-              <span className="break-words text-pink-600" title={student.name}>
-                {student.name}
-              </span>{' '}
-              <span aria-hidden>👋</span>
-            </h1>
-            <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink/70">
-              <span>
-                Student ID: <b className="font-semibold text-ink">{student.studentCode}</b>
-              </span>
-              <span aria-hidden>·</span>
-              <span>Campus Dining Portal</span>
-            </p>
-          </div>
-
-          <div className="relative order-1 flex h-56 items-end justify-center self-stretch sm:h-64 lg:order-2 lg:h-full">
-            <ArchPhoto className="h-full w-auto max-w-full translate-y-px lg:absolute lg:bottom-0 lg:right-16 lg:h-[94%]" />
-            <StreetLamp className="absolute bottom-0 right-2 hidden h-[78%] lg:block" />
-            <PartnerBrand />
-          </div>
-        </div>
-      </section>
+      <DashboardHero name={student.name} studentCode={student.studentCode} />
 
       {/* Stats */}
       <section aria-label="Student overview metrics" className="relative z-10 -mt-20 grid grid-cols-2 gap-4 px-3 sm:px-6 lg:-mt-16 lg:grid-cols-4">
