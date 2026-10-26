@@ -43,7 +43,8 @@ export default function DashboardHero({ name, studentCode }: { name: string; stu
         <PartnerBrand />
       </div>
 
-      <StreetLamp className="pointer-events-none absolute -top-6 right-1 hidden h-[105%] lg:block" />
+      {/* Stands on the bottom edge: explicit aspect ratio so the SVG box is exactly the lamp (no letterboxing). */}
+      <StreetLamp className="pointer-events-none absolute bottom-0 right-2 hidden aspect-[60/220] h-[94%] w-auto lg:block" />
     </section>
   );
 }

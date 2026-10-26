@@ -173,7 +173,7 @@ export function PalaceSketch({ className = '' }: { className?: string }) {
 /** Victorian street lamp, line art with a warm glass. */
 export function StreetLamp({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 60 220" className={className} aria-hidden>
+    <svg viewBox="0 0 60 220" preserveAspectRatio="xMidYMax meet" className={className} aria-hidden>
       <g stroke="#2c3443" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
         <path d="M30 8 V2 M24 10 H36 M18 24 L24 12 H36 L42 24 Z" fill="#2c3443" />
         <path d="M18 24 L22 56 H38 L42 24" fill="#fff6dc" />
