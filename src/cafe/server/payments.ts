@@ -8,7 +8,7 @@ import { audit } from '@/cafe/lib/audit';
 import { notify, notifyCafeStaff } from '@/cafe/lib/notify';
 import { inr } from '@/cafe/lib/money';
 import type { AuthedStudent } from '@/cafe/lib/rbac';
-import { createRazorpayOrder, razorpayConfig, refundRazorpayPayment } from '@/cafe/lib/razorpay';
+import { createRazorpayOrder, RazorpayError, razorpayConfig, refundRazorpayPayment } from '@/cafe/lib/razorpay';
 import { cancelAndRestock } from '@/cafe/lib/stockSql';
 import { prismaQ } from './orders';
 
@@ -28,6 +28,18 @@ export async function expireUnpaidOnlineOrders() {
   for (const o of stale) {
     await prisma.$transaction((tx) => cancelAndRestock(prismaQ(tx), o.id, 'Online payment not completed in time'));
   }
+  await retryPendingRefunds();
+}
+
+const RETRY_EVERY_MS = 5 * 60_000;
+let lastRetry = 0;
+
+/** Retries refunds that failed earlier (at most every 5 minutes per server instance). */
+export async function retryPendingRefunds() {
+  if (Date.now() - lastRetry < RETRY_EVERY_MS || !razorpayConfig().enabled) return;
+  lastRetry = Date.now();
+  const stuck = await prisma.order.findMany({ where: { paymentMethod: 'ONLINE', paymentStatus: 'REFUND_PENDING' }, select: { id: true }, take: 20 });
+  for (const o of stuck) await refundIfPaidOnline(o.id, true);
 }
 
 /** Opens (or re-opens) Razorpay Checkout for one of the student's unpaid online orders. */
@@ -93,26 +105,31 @@ export async function confirmOnlinePayment(providerOrderId: string, providerPaym
   return { orderId: order.id };
 }
 
-/** After a cancel: refund an online payment that was already captured. Failures are kept visible as REFUND_PENDING. */
-export async function refundIfPaidOnline(orderId: string) {
+/**
+ * After a cancel: refund an online payment that was already captured. A failed attempt leaves the
+ * order REFUND_PENDING (shown to staff/admin) and is retried automatically.
+ */
+export async function refundIfPaidOnline(orderId: string, retry = false) {
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
   const pay = order?.payment;
-  if (!order || order.paymentMethod !== 'ONLINE' || order.paymentStatus !== 'PAID' || !pay?.providerPaymentId) return;
+  const from = retry ? 'REFUND_PENDING' : 'PAID';
+  if (!order || order.paymentMethod !== 'ONLINE' || order.paymentStatus !== from || !pay?.providerPaymentId) return;
   // Claim the refund first so two cancels can never refund twice.
-  const claimed = await prisma.order.updateMany({ where: { id: orderId, paymentStatus: 'PAID' }, data: { paymentStatus: 'REFUND_PENDING' } });
+  const claimed = await prisma.order.updateMany({ where: { id: orderId, paymentStatus: from }, data: { paymentStatus: 'REFUND_PENDING' } });
   if (claimed.count !== 1) return;
   try {
-    const r = await refundRazorpayPayment(pay.providerPaymentId, order.totalAmount * 100);
+    const r = await refundRazorpayPayment(pay.providerPaymentId);
     await prisma.$transaction([
       prisma.order.update({ where: { id: orderId }, data: { paymentStatus: 'REFUNDED' } }),
       prisma.payment.update({ where: { id: pay.id }, data: { status: 'REFUNDED', refundId: r.id } }),
     ]);
-    await audit(null, 'ONLINE_PAYMENT_REFUNDED', 'Order', orderId, { amount: order.totalAmount, refundId: r.id });
+    await audit(null, 'ONLINE_PAYMENT_REFUNDED', 'Order', orderId, { amount: order.totalAmount, refundId: r.id, outcome: r.outcome });
     const student = await prisma.student.findUnique({ where: { id: order.studentId }, select: { userId: true } });
     if (student) await notify(student.userId, 'Refund started', `${inr(order.totalAmount)} for order ${order.orderNumber} is being refunded to your original payment method (usually 5-7 working days).`, 'PAYMENT');
   } catch (e) {
     await prisma.payment.update({ where: { id: pay.id }, data: { status: 'REFUND_PENDING' } });
-    await audit(null, 'ONLINE_REFUND_FAILED', 'Order', orderId, { error: e instanceof Error ? e.message : 'unknown' });
-    console.error('[payments] refund failed; marked REFUND_PENDING', e instanceof Error ? e.message : e);
+    const detail = e instanceof RazorpayError ? { status: e.status, ...e.detail } : { error: e instanceof Error ? e.message : 'unknown' };
+    await audit(null, 'ONLINE_REFUND_FAILED', 'Order', orderId, { providerPaymentId: pay.providerPaymentId, retry, ...detail });
+    console.error('[payments] refund failed; will retry', JSON.stringify(detail));
   }
 }
