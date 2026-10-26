@@ -193,7 +193,7 @@ const ARCH_H = 330;
 const ARCH_D = archPath(ARCH_W, ARCH_H, 6);
 
 /** Campus photo in the cusped jharokha arch, framed by bougainvillea. `uid` must be unique per instance. */
-export function ArchPhoto({ className = '', uid = 'arch' }: { className?: string; uid?: string }) {
+export function ArchPhoto({ className = '', uid = 'arch', photoHref = '/brand/hero-campus.webp' }: { className?: string; uid?: string; photoHref?: string }) {
   // The flowers spill past the arch, so the SVG canvas is padded around it.
   const pad = { l: 70, r: 30, t: 24, b: 0 };
   const B = (p: Omit<Parameters<typeof Bougainvillea>[0], 'uid'>) => <Bougainvillea uid={uid} {...p} />;
@@ -212,7 +212,7 @@ export function ArchPhoto({ className = '', uid = 'arch' }: { className?: string
       </defs>
       <path d={ARCH_D} fill="#fff" transform="translate(-6 -6) scale(1.022)" opacity={0.95} />
       <image
-        href="/brand/hero-campus.webp"
+        href={photoHref}
         x={-10}
         y={-4}
         width={ARCH_W + 20}

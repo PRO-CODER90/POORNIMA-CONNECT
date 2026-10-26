@@ -1,18 +1,23 @@
+import Image from 'next/image';
 import PartnerBrand from '@/cafe/components/student/PartnerBrand';
-import { ArchPhoto, EdgeFlowers, PalaceSketch, SkySketch, StreetLamp } from '@/cafe/components/student/HeroScene';
+import { PalaceSketch, SkySketch, StreetLamp } from '@/cafe/components/student/HeroScene';
+
+// The flower-framed arch and edge sprays are pre-rendered images (scripts/render-hero-art.tsx):
+// drawn live as SVG they were ~11,000 page elements and made the dashboard slow to load and scroll.
 
 /** Student dashboard banner: welcome text on the left, flower-framed campus arch on the right. */
 export default function DashboardHero({ name, studentCode }: { name: string; studentCode: string }) {
   return (
-    <>
-    {/* Hero: full-bleed banner (breaks out of the page container to the viewport edges) */}
+    // Full-bleed: breaks out of the page container to the viewport edges.
     <section
       aria-label="Welcome"
       className="relative isolate -mt-4 mx-[calc(50%-50vw)] overflow-hidden bg-[linear-gradient(115deg,#fdf3e7_0%,#fcebdc_55%,#fbe3d3_100%)]"
     >
       <SkySketch className="pointer-events-none absolute left-[3%] top-4 -z-10 w-[24rem] opacity-80 sm:w-[30rem]" />
       <PalaceSketch className="pointer-events-none absolute -bottom-6 left-[3%] -z-10 w-[30rem] opacity-70 sm:w-[38rem] lg:w-[44rem]" />
-      <EdgeFlowers uid="hero-edge" className="pointer-events-none absolute -left-2 top-0 hidden h-full w-auto sm:block" />
+      <div className="pointer-events-none absolute -left-2 top-0 hidden aspect-[180/840] h-full sm:block" aria-hidden>
+        <Image src="/brand/hero-edge.webp" alt="" fill sizes="90px" className="object-contain object-left-top" />
+      </div>
 
       <div className="relative grid min-h-[22rem] items-center px-4 sm:px-8 lg:min-h-[31rem] lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:px-[6.5%]">
         <div className="relative z-10 order-2 min-w-0 pb-24 pt-2 lg:order-1 lg:pb-28 lg:pt-0">
@@ -31,16 +36,14 @@ export default function DashboardHero({ name, studentCode }: { name: string; stu
             <span>Campus Dining Portal</span>
           </p>
         </div>
-        <div className="order-1 h-60 sm:h-72 lg:hidden">
-          <ArchPhoto uid="hero-arch-m" className="h-full w-full" />
+        {/* Phones: above the text. Desktop: fills the right half up to the top edge. One element, one download. */}
+        <div className="pointer-events-none relative order-1 h-60 sm:h-72 lg:absolute lg:bottom-0 lg:right-[4.5%] lg:order-none lg:h-full lg:w-[56%]">
+          <Image src="/brand/hero-arch.webp" alt="Poornima University campus" fill priority sizes="(min-width:1024px) 56vw, 100vw" className="object-contain object-bottom" />
         </div>
         <PartnerBrand />
       </div>
 
-      {/* Desktop: the arch photo fills the right half and runs to the top edge; the lamp sits at the far right */}
-      <ArchPhoto uid="hero-arch-d" className="pointer-events-none absolute bottom-0 right-[4.5%] hidden h-[100%] w-[56%] lg:block" />
       <StreetLamp className="pointer-events-none absolute -top-6 right-1 hidden h-[105%] lg:block" />
     </section>
-    </>
   );
 }

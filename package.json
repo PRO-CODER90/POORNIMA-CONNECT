@@ -17,7 +17,8 @@
     "verify:stock": "tsx scripts/verify-stock.ts",
     "make:demo-images": "node scripts/make-demo-images.mjs",
     "images:optimize": "node scripts/optimize-images.mjs",
-    "seo:audit": "node scripts/seo-audit.mjs"
+    "seo:audit": "node scripts/seo-audit.mjs",
+    "hero:render": "tsx scripts/render-hero-art.tsx"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
