@@ -156,7 +156,7 @@ function OrderRow({ o }: { o: RecentOrder }) {
 
         <div className="flex items-center gap-2.5">
           <span className="font-mono text-sm font-bold text-ink">{inr(o.totalAmount)}</span>
-          <PaymentBadge status={o.paymentStatus} />
+          <PaymentBadge status={o.paymentStatus} method={o.paymentMethod} />
           <OrderStatusBadge status={o.orderStatus} />
           <ChevronRight size={16} className="text-slate-300 transition-colors group-hover:text-pu-600" aria-hidden />
         </div>

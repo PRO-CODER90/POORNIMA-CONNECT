@@ -18,6 +18,7 @@ interface OrderRow {
   totalAmount: number;
   itemCount: number;
   paymentStatus: string;
+  paymentMethod?: string;
   orderStatus: string;
   createdAt: string;
   acceptedAt: string | null;
@@ -196,7 +197,7 @@ export default function StaffDashboard() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs font-black text-slate-900">{o.orderNumber}</span>
                       <OrderStatusBadge status={o.orderStatus} />
-                      <PaymentBadge status={o.paymentStatus} />
+                      <PaymentBadge status={o.paymentStatus} method={o.paymentMethod} />
                     </div>
                     <div className="mt-0.5 truncate text-xs text-slate-500">
                       {o.student?.name} · <span className="font-mono">{o.student?.studentCode}</span> · {fmtTime(o.createdAt)}
@@ -205,7 +206,7 @@ export default function StaffDashboard() {
                 </div>
                 <div className="text-right">
                   <div className="text-base font-black text-slate-900">{inr(o.totalAmount)}</div>
-                  <div className="text-[10px] text-slate-400">{o.itemCount} item{o.itemCount === 1 ? '' : 's'} · CASH</div>
+                  <div className="text-[10px] text-slate-400">{o.itemCount} item{o.itemCount === 1 ? '' : 's'} · {o.paymentMethod === 'ONLINE' ? 'ONLINE' : 'CASH'}</div>
                 </div>
               </div>
               <div className="mt-2 truncate text-xs text-slate-500">{o.items.map((i) => `${i.name} × ${i.quantity}`).join(', ')}</div>
@@ -269,7 +270,7 @@ function OrderActions({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-sm font-black">{order.orderNumber}</span>
         <div className="flex gap-2">
-          <PaymentBadge status={order.paymentStatus} />
+          <PaymentBadge status={order.paymentStatus} method={order.paymentMethod} />
           <OrderStatusBadge status={s} />
         </div>
       </div>
@@ -277,7 +278,7 @@ function OrderActions({
         <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student</span><div className="font-bold">{order.student?.name}</div></div>
         <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Student ID</span><div className="font-mono text-xs font-bold">{order.student?.studentCode}</div></div>
         <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Order time</span><div className="font-bold">{fmtTime(order.createdAt)}</div></div>
-        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Payment method</span><div className="font-bold">💵 CASH</div></div>
+        <div className="rounded-xl bg-pu-50/60 px-3 py-2"><span className="text-xs text-slate-400">Payment method</span><div className="font-bold">{order.paymentMethod === 'ONLINE' ? 'Paid online' : '💵 CASH'}</div></div>
       </div>
 
       <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-100">

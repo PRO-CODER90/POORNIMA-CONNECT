@@ -27,19 +27,22 @@ export function OrderStatusBadge({ status }: { status: string }) {
   );
 }
 
-export function PaymentBadge({ status }: { status: string }) {
-  if (status === 'PAID') {
-    return (
-      <Badge tone="green">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden />
-        <span>CASH PAID</span>
-      </Badge>
-    );
-  }
+export function PaymentBadge({ status, method = 'CASH' }: { status: string; method?: string }) {
+  const online = method === 'ONLINE';
+  const [tone, dot, label] =
+    status === 'PAID'
+      ? (['green', 'bg-emerald-600', online ? 'PAID ONLINE' : 'CASH PAID'] as const)
+      : status === 'REFUNDED'
+        ? (['gray', 'bg-slate-500', 'REFUNDED'] as const)
+        : status === 'REFUND_PENDING'
+          ? (['red', 'bg-rose-600', 'REFUND PENDING'] as const)
+          : online
+            ? (['amber', 'bg-amber-600', 'AWAITING PAYMENT'] as const)
+            : (['amber', 'bg-amber-600', 'CASH PENDING'] as const);
   return (
-    <Badge tone="amber">
-      <span className="h-1.5 w-1.5 rounded-full bg-amber-600" aria-hidden />
-      <span>CASH PENDING</span>
+    <Badge tone={tone}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} aria-hidden />
+      <span>{label}</span>
     </Badge>
   );
 }

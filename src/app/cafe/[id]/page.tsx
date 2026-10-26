@@ -15,6 +15,7 @@ import CartDrawer from '@/cafe/components/cart/CartDrawer';
 import RoleShell from '@/cafe/components/layout/RoleShell';
 import { cafeImage } from '@/cafe/components/CafeCard';
 import { getCafeWithMenu } from '@/cafe/server/student';
+import { onlinePaymentsEnabled } from '@/cafe/lib/razorpay';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,7 +154,7 @@ export default async function CafePage({ params }: { params: Promise<{ id: strin
         </div>
 
         <CartFab />
-        <CartDrawer />
+        <CartDrawer onlineEnabled={onlinePaymentsEnabled()} />
       </CartProvider>
     </RoleShell>
   );

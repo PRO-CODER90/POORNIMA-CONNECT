@@ -312,3 +312,10 @@ CREATE TABLE IF NOT EXISTS "StockMovement" (
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE INDEX IF NOT EXISTS "StockMovement_menuItemId_createdAt_idx" ON "StockMovement" ("menuItemId", "createdAt");
 CREATE INDEX IF NOT EXISTS "StockMovement_cafeId_createdAt_idx" ON "StockMovement" ("cafeId", "createdAt");
+
+-- ─── Online payments (Razorpay) ───
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "provider" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "providerOrderId" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "providerPaymentId" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundId" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "Payment_providerOrderId_key" ON "Payment" ("providerOrderId");

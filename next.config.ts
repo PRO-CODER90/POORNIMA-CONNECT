@@ -7,13 +7,14 @@ const isDev = process.env.NODE_ENV !== "production";
 // dev additionally needs eval/websockets for hot reload.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com/gsi/client https://www.googletagmanager.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://accounts.google.com/gsi/client https://www.googletagmanager.com https://checkout.razorpay.com`,
   "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
   "font-src 'self' data:",
   "img-src 'self' data: https:",
   // Google Analytics (public pages, after consent only) needs the GA collection hosts.
-  `connect-src 'self' https://accounts.google.com/gsi/ https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com${isDev ? " ws:" : ""}`,
-  "frame-src https://accounts.google.com/gsi/",
+  `connect-src 'self' https://accounts.google.com/gsi/ https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://api.razorpay.com https://lumberjack.razorpay.com${isDev ? " ws:" : ""}`,
+  // Razorpay Checkout runs in its own frames.
+  "frame-src https://accounts.google.com/gsi/ https://api.razorpay.com https://checkout.razorpay.com",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "base-uri 'self'",

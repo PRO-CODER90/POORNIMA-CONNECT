@@ -75,7 +75,7 @@ export default async function AdminStudentDetailPage({ params }: { params: Promi
                       <td className="px-4 py-2.5 text-xs font-semibold">{o.cafe.name}</td>
                       <td className="px-4 py-2.5 text-xs text-slate-500">{fmtDateTime(o.createdAt)}</td>
                       <td className="px-4 py-2.5 text-right font-black">{inr(o.totalAmount)}</td>
-                      <td className="px-4 py-2.5"><PaymentBadge status={o.paymentStatus} /></td>
+                      <td className="px-4 py-2.5"><PaymentBadge status={o.paymentStatus} method={o.paymentMethod} /></td>
                       <td className="px-4 py-2.5"><OrderStatusBadge status={o.orderStatus} /></td>
                     </tr>
                   ))}

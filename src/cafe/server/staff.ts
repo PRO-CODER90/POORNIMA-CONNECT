@@ -5,6 +5,7 @@ import { dateKey, dayEnd, dayStart } from '@/cafe/lib/dates';
 import { inr } from '@/cafe/lib/money';
 import { reconcileCash, type CashRecon } from '@/cafe/lib/revenue';
 import { orderInclude, toOrderDto } from './orders';
+import { expireUnpaidOnlineOrders, UNPAID_ONLINE } from './payments';
 import { audit } from '@/cafe/lib/audit';
 import { cafeOpenState } from '@/cafe/lib/cafe';
 
@@ -12,15 +13,16 @@ import { cafeOpenState } from '@/cafe/lib/cafe';
 export async function staffDashboard(staff: AuthedStaff) {
   assertStaffCafe(staff.staff, staff.staff.assignedCafeId); // defense in depth
   const cafeId = staff.staff.assignedCafeId;
+  await expireUnpaidOnlineOrders();
   const { from, to } = { from: dayStart(), to: dayEnd() };
 
   const [newOrders, preparing, ready, completedToday, allToday, pendingPayment] = await Promise.all([
-    prisma.order.findMany({ where: { cafeId, orderStatus: 'PLACED' }, include: orderInclude, orderBy: { createdAt: 'desc' }, take: 30 }),
+    prisma.order.findMany({ where: { cafeId, orderStatus: 'PLACED', NOT: UNPAID_ONLINE }, include: orderInclude, orderBy: { createdAt: 'desc' }, take: 30 }),
     prisma.order.findMany({ where: { cafeId, orderStatus: 'PREPARING' }, include: orderInclude, orderBy: { preparingAt: 'desc' }, take: 30 }),
     prisma.order.findMany({ where: { cafeId, orderStatus: 'READY' }, include: orderInclude, orderBy: { readyAt: 'desc' }, take: 30 }),
     prisma.order.findMany({ where: { cafeId, orderStatus: 'COMPLETED', createdAt: { gte: from, lte: to } }, include: orderInclude, orderBy: { createdAt: 'desc' }, take: 50 }),
-    prisma.order.findMany({ where: { cafeId, createdAt: { gte: from, lte: to } }, select: { totalAmount: true, orderStatus: true, paymentStatus: true }, take: 1000 }),
-    prisma.order.findMany({ where: { cafeId, paymentStatus: 'PENDING', orderStatus: { notIn: ['CANCELLED', 'COMPLETED'] } }, include: orderInclude, orderBy: { createdAt: 'desc' }, take: 50 }),
+    prisma.order.findMany({ where: { cafeId, createdAt: { gte: from, lte: to }, NOT: UNPAID_ONLINE }, select: { totalAmount: true, orderStatus: true, paymentStatus: true }, take: 1000 }),
+    prisma.order.findMany({ where: { cafeId, paymentStatus: 'PENDING', paymentMethod: 'CASH', orderStatus: { notIn: ['CANCELLED', 'COMPLETED'] } }, include: orderInclude, orderBy: { createdAt: 'desc' }, take: 50 }),
   ]);
 
   const recon: CashRecon = reconcileCash(allToday);
@@ -50,7 +52,8 @@ export type StaffOrderFilter = 'new' | 'accepted' | 'preparing' | 'ready' | 'com
 /** Staff order list — the cafe filter ALWAYS comes from the session, never the query. */
 export async function staffOrders(staff: AuthedStaff, filter: string, search: string | null) {
   const cafeId = staff.staff.assignedCafeId;
-  const where: Prisma.OrderWhereInput = { cafeId };
+  // Online orders that are not paid yet never reach the counter.
+  const where: Prisma.OrderWhereInput = { cafeId, NOT: UNPAID_ONLINE };
   const today = { gte: dayStart(), lte: dayEnd() };
   switch (filter as StaffOrderFilter) {
     case 'new': where.orderStatus = 'PLACED'; break;
@@ -59,7 +62,7 @@ export async function staffOrders(staff: AuthedStaff, filter: string, search: st
     case 'ready': where.orderStatus = 'READY'; break;
     case 'completed': where.orderStatus = 'COMPLETED'; where.createdAt = today; break;
     case 'cancelled': where.orderStatus = 'CANCELLED'; break;
-    case 'paypending': where.paymentStatus = 'PENDING'; where.orderStatus = { not: 'CANCELLED' }; break;
+    case 'paypending': where.paymentStatus = 'PENDING'; where.paymentMethod = 'CASH'; where.orderStatus = { not: 'CANCELLED' }; break;
     case 'all':
     default:
       where.createdAt = today;

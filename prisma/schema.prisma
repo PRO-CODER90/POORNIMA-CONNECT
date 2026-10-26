@@ -174,8 +174,8 @@ model Order {
   cafe          Cafe       @relation(fields: [cafeId], references: [id])
   totalAmount   Int // server-calculated, never trusted from client
   itemCount     Int        @default(0)
-  paymentMethod String     @default("CASH")
-  paymentStatus String     @default("PENDING") // PENDING | PAID
+  paymentMethod String     @default("CASH") // CASH | ONLINE
+  paymentStatus String     @default("PENDING") // PENDING | PAID | REFUNDED | REFUND_PENDING
   orderStatus   String     @default("PLACED") // PLACED|ACCEPTED|PREPARING|READY|COMPLETED|CANCELLED
   cancelReason  String?
   createdAt     DateTime   @default(now())
@@ -214,10 +214,14 @@ model Payment {
   order             Order     @relation(fields: [orderId], references: [id])
   method            String    @default("CASH")
   amount            Int
-  status            String    @default("PENDING") // PENDING | PAID
+  status            String    @default("PENDING") // PENDING | PAID | REFUNDED | REFUND_PENDING
   receivedAt        DateTime?
   receivedByStaffId String?
   createdAt         DateTime  @default(now())
+  provider          String? // RAZORPAY for online payments
+  providerOrderId   String?   @unique // Razorpay order id (order_...)
+  providerPaymentId String? // Razorpay payment id (pay_...)
+  refundId          String?
 }
 
 // ─────────────────────────────── NOTIFICATIONS / AUDIT ───────────────────────────────

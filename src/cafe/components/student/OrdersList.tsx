@@ -15,6 +15,7 @@ export interface OrderLite {
   items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   paymentStatus: string;
+  paymentMethod?: string;
   orderStatus: string;
   createdAt: string;
 }
@@ -131,7 +132,7 @@ export default function OrdersList() {
 
                 <div className="flex items-center gap-2.5">
                   <span className="font-mono text-sm font-bold text-ink">{inr(o.totalAmount)}</span>
-                  <PaymentBadge status={o.paymentStatus} />
+                  <PaymentBadge status={o.paymentStatus} method={o.paymentMethod} />
                   <OrderStatusBadge status={o.orderStatus} />
                 </div>
               </div>

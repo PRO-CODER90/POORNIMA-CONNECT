@@ -16,6 +16,7 @@ export interface AdminOrderRow {
   items: { id: string; name: string; imageUrl: string | null; quantity: number; unitPrice: number; subtotal: number }[];
   totalAmount: number;
   paymentStatus: string;
+  paymentMethod?: string;
   orderStatus: string;
   createdAt: string;
 }
@@ -158,7 +159,7 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
                   </td>
                   <td className="max-w-[180px] truncate px-4 py-3 text-xs text-slate-500">{o.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}</td>
                   <td className="px-4 py-3 text-right font-black">{inr(o.totalAmount)}</td>
-                  <td className="px-4 py-3"><PaymentBadge status={o.paymentStatus} /></td>
+                  <td className="px-4 py-3"><PaymentBadge status={o.paymentStatus} method={o.paymentMethod} /></td>
                   <td className="px-4 py-3"><OrderStatusBadge status={o.orderStatus} /></td>
                   <td className="px-4 py-3 text-right">
                     <button onClick={() => setDetailId(o.id)} className="text-xs font-bold text-indigo-600 hover:underline">View</button>
@@ -175,7 +176,7 @@ export default function AdminOrdersTable({ cafes }: { cafes: CafeOption[] }) {
         {detail ? (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
-              <PaymentBadge status={detail.paymentStatus} />
+              <PaymentBadge status={detail.paymentStatus} method={detail.paymentMethod} />
               <OrderStatusBadge status={detail.orderStatus} />
               <span className="text-xs text-slate-400">{detail.cafe.name} · {fmtDateTime(detail.createdAt)}</span>
             </div>
