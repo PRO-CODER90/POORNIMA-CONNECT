@@ -24,7 +24,10 @@ export type AuditAction =
   | 'STAFF_DEACTIVATED'
   | 'STAFF_PASSWORD_RESET'
   | 'STUDENT_UPDATED'
-  | 'STOCK_ADJUSTED';
+  | 'STOCK_ADJUSTED'
+  | 'ONLINE_PAYMENT_RECEIVED'
+  | 'ONLINE_PAYMENT_REFUNDED'
+  | 'ONLINE_REFUND_FAILED';
 
 /** Fire-and-forget audit log entry (spec §62). */
 export async function audit(

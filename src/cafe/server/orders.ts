@@ -16,6 +16,8 @@ import {
   type OrderStatus,
 } from '@/cafe/lib/orders';
 import { inr } from '@/cafe/lib/money';
+import { onlinePaymentsEnabled } from '@/cafe/lib/razorpay';
+import { expireUnpaidOnlineOrders, refundIfPaidOnline } from './payments';
 import { canOrder, demoImageFor } from '@/cafe/lib/stock';
 import { cancelAndRestock, deductStock, StockError, type Q, type StockChange } from '@/cafe/lib/stockSql';
 
@@ -123,9 +125,12 @@ export interface CartLine {
  * writes order + items + notifications, and rolls back on any failure.
  * The client-sent total is NEVER used.
  */
-export async function createOrder(student: AuthedStudent, rawLines: unknown) {
+export async function createOrder(student: AuthedStudent, rawLines: unknown, rawMethod: unknown = 'CASH') {
   const lines: CartLine[] = z_like(rawLines);
   if (lines.length === 0) throw badRequest('Your cart is empty.');
+  const method = rawMethod === 'ONLINE' ? 'ONLINE' : 'CASH';
+  if (method === 'ONLINE' && !onlinePaymentsEnabled()) throw badRequest('Online payment is not available right now. Please choose cash.');
+  await expireUnpaidOnlineOrders(); // frees stock held by abandoned online checkouts
 
   for (let attempt = 0; attempt < 3; attempt++) {
     let stockChanges: StockChange[] = [];
@@ -178,7 +183,7 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
             cafeId: cafe.id,
             totalAmount: calc.total,
             itemCount: calc.itemCount,
-            paymentMethod: 'CASH',
+            paymentMethod: method,
             paymentStatus: 'PENDING',
             orderStatus: 'PLACED',
             items: {
@@ -213,7 +218,7 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
             action: 'ORDER_CREATED',
             entityType: 'Order',
             entityId: order.id,
-            metadata: JSON.stringify({ orderNumber, total: calc.total, cafeId: cafe.id }),
+            metadata: JSON.stringify({ orderNumber, total: calc.total, cafeId: cafe.id, method }),
           },
         });
 
@@ -222,7 +227,8 @@ export async function createOrder(student: AuthedStudent, rawLines: unknown) {
     // Notify AFTER the commit — notifications are best-effort and must never
     // hold the write lock inside the transaction (SQLite deadlock) or roll back
     // an order because a notification insert failed.
-    await notifyCafeStaff(
+    // Online orders reach the cafe only once paid (see confirmOnlinePayment).
+    if (method === 'CASH') await notifyCafeStaff(
       dto.cafe.id,
       '🔔 NEW ORDER',
       `New order ${dto.orderNumber} from ${dto.student?.name ?? 'a student'} (${dto.student?.studentCode ?? '—'}) — ${dto.itemCount} item(s), ${inr(dto.totalAmount)} CASH (pending).`,
@@ -314,6 +320,7 @@ export async function cancelOrder(orderId: string, reason: string | undefined, a
   // The guarded status change and the restock commit together, so stock comes back exactly once.
   const done = await prisma.$transaction((tx) => cancelAndRestock(prismaQ(tx), orderId, cancelReason));
   if (!done) throw conflict('This order was already cancelled or completed.');
+  await refundIfPaidOnline(orderId);
   const updated = await prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: orderInclude });
   await audit(actor.kind === 'student' ? actor.ctx.session.id : actor.kind === 'staff' ? actor.ctx.staff.userId : actor.ctx.session.id, 'ORDER_CANCELLED', 'Order', orderId, { reason: updated.cancelReason });
   if (actor.kind === 'student') {
@@ -342,6 +349,7 @@ export async function advanceOrder(staff: AuthedStaff, orderId: string, action: 
   const order = await prisma.order.findUnique({ where: { id: orderId }, include: { cafe: { select: { id: true } } } });
   if (!order) throw notFound('Order not found.');
   assertStaffCafe(staff.staff, order.cafeId);
+  if (order.paymentMethod === 'ONLINE' && order.paymentStatus !== 'PAID') throw conflict('This online order has not been paid yet.');
   if (!canTransition(order.orderStatus as OrderStatus, target)) {
     throw conflict(`Cannot move order from ${order.orderStatus} to ${target}.`);
   }
@@ -378,6 +386,7 @@ export async function markCashReceived(staff: AuthedStaff, orderId: string) {
   if (!order) throw notFound('Order not found.');
   assertStaffCafe(staff.staff, order.cafeId);
   if (order.orderStatus === 'CANCELLED') throw conflict('Cannot take payment for a cancelled order.');
+  if (order.paymentMethod === 'ONLINE') throw conflict('This order is paid online, not in cash.');
   if (order.paymentStatus === 'PAID') throw conflict('Payment for this order was already recorded.');
 
   const updated = await prisma.$transaction(async (tx) => {

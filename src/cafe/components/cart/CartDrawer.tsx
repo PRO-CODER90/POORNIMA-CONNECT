@@ -5,15 +5,19 @@ import Link from 'next/link';
 import { Minus, Plus, Trash2, X, ShoppingCart, Banknote, Store } from 'lucide-react';
 import { useCart } from './CartContext';
 import { Spinner, ErrorNote, EmptyState } from '@/cafe/components/ui';
+import { PaymentBadge } from '@/cafe/components/status';
 import { inr } from '@/cafe/lib/money';
 import type { OrderDto } from '@/cafe/server/orders';
 import { ProductThumb } from '@/cafe/components/ProductImage';
+import { payOnline } from '@/cafe/lib/razorpayCheckout';
 
-export default function CartDrawer() {
+export default function CartDrawer({ onlineEnabled = false }: { onlineEnabled?: boolean }) {
   const cart = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [placed, setPlaced] = useState<OrderDto | null>(null);
+  const [method, setMethod] = useState<'ONLINE' | 'CASH'>(onlineEnabled ? 'ONLINE' : 'CASH');
+  const [payNote, setPayNote] = useState<string | null>(null);
   const { drawerOpen, refreshStock } = cart;
 
   // Re-check stock whenever the drawer opens: the saved cart is never trusted for quantities.
@@ -34,7 +38,7 @@ export default function CartDrawer() {
         headers: { 'Content-Type': 'application/json' },
         // NOTE: we send item ids + quantities ONLY. The total is always
         // recomputed server-side from database prices (spec §66).
-        body: JSON.stringify({ items: cart.items.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })) }),
+        body: JSON.stringify({ items: cart.items.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })), paymentMethod: method }),
       });
       const data = await r.json();
       if (!r.ok) {
@@ -42,8 +46,20 @@ export default function CartDrawer() {
         refreshStock(); // e.g. "Only 2 left of Potato Chips." — fetch the new numbers and clamp the cart
         return;
       }
-      setPlaced(data.order as OrderDto);
+      const order = data.order as OrderDto;
       cart.clear();
+      setPayNote(null);
+      if (order.paymentMethod === 'ONLINE') {
+        // The order now holds the stock; pay for it in Razorpay Checkout.
+        try {
+          const result = await payOnline(order.id);
+          if (result === 'paid') order.paymentStatus = 'PAID';
+          else setPayNote('Payment not completed. Pay from the order page within 15 minutes, or the order is cancelled automatically.');
+        } catch (e) {
+          setPayNote(`${e instanceof Error ? e.message : 'Payment failed.'} You can retry from the order page within 15 minutes.`);
+        }
+      }
+      setPlaced(order);
     } catch {
       setError('Network error. Your order was not placed — please retry.');
     } finally {
@@ -54,6 +70,7 @@ export default function CartDrawer() {
   const close = () => {
     cart.setDrawerOpen(false);
     setPlaced(null);
+    setPayNote(null);
     setError(null);
   };
 
@@ -105,14 +122,11 @@ export default function CartDrawer() {
               <div className="border-t border-slate-200/60 pt-2">
                 <Row k="Total Amount" v={<span className="font-mono text-sm font-bold text-ink">{inr(placed.totalAmount)}</span>} />
               </div>
-              <Row k="Payment Method" v="CASH at the counter" />
+              <Row k="Payment Method" v={placed.paymentMethod === 'ONLINE' ? 'Online (Razorpay)' : 'CASH at the counter'} />
 
               <div className="flex items-center justify-between pt-1">
                 <span className="text-[11px] font-medium text-muted">Payment Status</span>
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  CASH PENDING
-                </span>
+                <PaymentBadge status={placed.paymentStatus} method={placed.paymentMethod} />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-medium text-muted">Order Status</span>
@@ -123,13 +137,25 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900">
-              <Banknote size={16} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
-              <div>
-                <span className="font-semibold text-ink">Payment Instructions: </span>
-                Please pay <span className="font-mono font-bold">{inr(placed.totalAmount)}</span> in cash directly to the cafe staff at the counter.
+            {placed.paymentMethod === 'ONLINE' ? (
+              placed.paymentStatus === 'PAID' ? (
+                <div className="mt-4 w-full rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-left text-xs text-emerald-900">
+                  Paid <span className="font-mono font-bold">{inr(placed.totalAmount)}</span> online. Just collect your order at the counter.
+                </div>
+              ) : (
+                <div className="mt-4 w-full rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900" role="alert">
+                  {payNote}
+                </div>
+              )
+            ) : (
+              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900">
+                <Banknote size={16} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
+                <div>
+                  <span className="font-semibold text-ink">Payment Instructions: </span>
+                  Please pay <span className="font-mono font-bold">{inr(placed.totalAmount)}</span> in cash directly to the cafe staff at the counter.
+                </div>
               </div>
-            </div>
+            )}
 
             <Link
               href={`/student/orders/${placed.id}`}
@@ -253,13 +279,35 @@ export default function CartDrawer() {
                   <span className="font-mono text-lg font-bold text-ink">{inr(cart.subtotal)}</span>
                 </div>
 
-                <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
-                  <Banknote size={15} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
-                  <div className="leading-relaxed">
-                    <span className="font-semibold text-ink">Cash Only: </span>
-                    Present order number and pay exact cash at counter upon confirmation.
+                {onlineEnabled ? (
+                  <fieldset>
+                    <legend className="mb-1.5 text-xs font-semibold text-ink">Payment</legend>
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup">
+                      {([['ONLINE', 'Pay online', 'UPI, cards, netbanking'], ['CASH', 'Cash at counter', 'Pay when you collect']] as const).map(([v, label, sub]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          role="radio"
+                          aria-checked={method === v}
+                          onClick={() => setMethod(v)}
+                          className={`rounded-xl border px-3 py-2 text-left ${method === v ? 'border-pu-600 bg-pu-50 ring-1 ring-pu-600' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                        >
+                          <span className="block text-xs font-bold text-ink">{label}</span>
+                          <span className="block text-[10px] text-muted">{sub}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                ) : null}
+                {method === 'CASH' ? (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                    <Banknote size={15} className="mt-0.5 shrink-0 text-amber-600" aria-hidden />
+                    <div className="leading-relaxed">
+                      <span className="font-semibold text-ink">Cash: </span>
+                      Present order number and pay exact cash at counter upon confirmation.
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 {error && <ErrorNote message={error} />}
 
@@ -271,10 +319,10 @@ export default function CartDrawer() {
                   {busy ? (
                     <>
                       <Spinner className="h-3.5 w-3.5" />
-                      <span>Placing Order…</span>
+                      <span>{method === 'ONLINE' ? 'Processing payment…' : 'Placing Order…'}</span>
                     </>
                   ) : (
-                    'Place Order (Cash on Counter)'
+                    method === 'ONLINE' ? `Pay ${inr(cart.subtotal)} & Place Order` : 'Place Order (Cash on Counter)'
                   )}
                 </button>
 

@@ -6,6 +6,7 @@ import { OrderStatusBadge, PaymentBadge } from '@/cafe/components/status';
 import { ErrorNote, Skeleton } from '@/cafe/components/ui';
 import { inr } from '@/cafe/lib/money';
 import { fmtDateTime, fmtTime } from '@/cafe/lib/dates';
+import { payOnline } from '@/cafe/lib/razorpayCheckout';
 import { ProductThumb } from '@/cafe/components/ProductImage';
 
 export interface FullOrder {
@@ -117,6 +118,21 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
   }, 4000);
 
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  const pay = async () => {
+    setPaying(true);
+    setPayError(null);
+    try {
+      await payOnline(orderId);
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : 'Payment failed.');
+    } finally {
+      setPaying(false);
+      reload();
+    }
+  };
   const [cancelError, setCancelError] = useState<string | null>(null);
 
   const cancel = async () => {
@@ -154,6 +170,8 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
   }
   const o = data;
   const canCancel = o.orderStatus === 'PLACED';
+  const online = o.paymentMethod === 'ONLINE';
+  const awaitingPayment = online && o.paymentStatus === 'PENDING' && o.orderStatus !== 'CANCELLED';
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -168,7 +186,7 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <PaymentBadge status={o.paymentStatus} />
+              <PaymentBadge status={o.paymentStatus} method={o.paymentMethod} />
               <OrderStatusBadge status={o.orderStatus} />
             </div>
           </div>
@@ -204,7 +222,7 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
           <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl border border-slate-100 bg-pu-50/60 p-4 text-xs sm:grid-cols-4">
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Method</div>
-              <div className="mt-1 font-semibold text-ink">Cash at Counter</div>
+              <div className="mt-1 font-semibold text-ink">{online ? 'Online (Razorpay)' : 'Cash at Counter'}</div>
             </div>
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Payment Status</div>
@@ -224,6 +242,18 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
             </div>
           </div>
         </div>
+
+        {awaitingPayment && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4">
+            <div className="text-xs text-amber-900">
+              This order is <span className="font-semibold">waiting for payment</span>. Pay within 15 minutes of ordering, or it is cancelled automatically.
+            </div>
+            <button onClick={pay} disabled={paying} className="btn-solid-pu">
+              {paying ? 'Opening payment…' : `Pay ${inr(o.totalAmount)} now`}
+            </button>
+          </div>
+        )}
+        {payError && <ErrorNote message={payError} />}
 
         {canCancel && (
           <div className="flex flex-wrap items-center justify-between gap-3 surface p-4">

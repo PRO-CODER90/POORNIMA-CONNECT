@@ -15,6 +15,7 @@ interface DailyTxn {
   totalAmount: number;
   orderStatus: string;
   paymentStatus: string;
+  paymentMethod?: string;
   createdAt: string;
 }
 
@@ -134,7 +135,7 @@ export default function ReportsPanel() {
                       <td className="px-4 py-2.5 text-xs">{t.student?.name} <span className="font-mono text-[10px] text-slate-400">{t.student?.studentCode}</span></td>
                       <td className="max-w-[200px] truncate px-4 py-2.5 text-xs text-slate-500">{t.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}</td>
                       <td className="px-4 py-2.5 text-right font-black">{inr(t.totalAmount)}</td>
-                      <td className="px-4 py-2.5"><PaymentBadge status={t.paymentStatus} /></td>
+                      <td className="px-4 py-2.5"><PaymentBadge status={t.paymentStatus} method={t.paymentMethod} /></td>
                       <td className="px-4 py-2.5"><OrderStatusBadge status={t.orderStatus} /></td>
                     </tr>
                   ))}
