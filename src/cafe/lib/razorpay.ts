@@ -35,16 +35,27 @@ export function verifyWebhookSignature(rawBody: string, signature: string, secre
 
 type Fetch = typeof fetch;
 
-async function call<T>(path: string, body: unknown, fetchImpl: Fetch = fetch): Promise<T> {
+export class RazorpayError extends Error {
+  status: number;
+  detail: Record<string, unknown>;
+  constructor(path: string, status: number, detail: Record<string, unknown>) {
+    super(`razorpay ${path} ${status}: ${String(detail.description ?? 'request failed')}`);
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+async function call<T>(path: string, body: unknown, fetchImpl: Fetch = fetch, method: 'GET' | 'POST' = 'POST'): Promise<T> {
   const { keyId, keySecret } = razorpayConfig();
   const r = await fetchImpl(`${API}${path}`, {
-    method: 'POST',
-    headers: { Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method,
+    headers: { Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`, ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}) },
+    body: method === 'POST' ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(10_000),
   });
-  const d = (await r.json().catch(() => ({}))) as T & { error?: { description?: string } };
-  if (!r.ok) throw new Error(`razorpay ${path} ${r.status}: ${d.error?.description ?? 'request failed'}`);
+  const d = (await r.json().catch(() => ({}))) as T & { error?: Record<string, unknown> };
+  // Keep Razorpay's full error (code, field, reason, step) so failures can be diagnosed from the audit log.
+  if (!r.ok) throw new RazorpayError(path, r.status, d.error ?? {});
   return d;
 }
 
@@ -53,6 +64,26 @@ export function createRazorpayOrder(amountPaise: number, receipt: string, notes:
   return call<{ id: string; amount: number; currency: string; status: string }>('/orders', { amount: amountPaise, currency: 'INR', receipt: receipt.slice(0, 40), notes }, fetchImpl);
 }
 
-export function refundRazorpayPayment(paymentId: string, amountPaise: number, fetchImpl?: Fetch) {
-  return call<{ id: string; status: string }>(`/payments/${encodeURIComponent(paymentId)}/refund`, { amount: amountPaise, speed: 'normal' }, fetchImpl);
+export interface RazorpayPayment {
+  id: string;
+  status: 'created' | 'authorized' | 'captured' | 'refunded' | 'failed';
+  amount: number;
+  amount_refunded: number;
+}
+
+export function fetchRazorpayPayment(paymentId: string, fetchImpl?: Fetch) {
+  return call<RazorpayPayment>(`/payments/${encodeURIComponent(paymentId)}`, undefined, fetchImpl, 'GET');
+}
+
+/**
+ * Full refund. Checks the payment first: only a captured payment can be refunded; an authorized
+ * but uncaptured one is released back to the payer by Razorpay automatically; one already
+ * refunded needs nothing. The request body is empty (= refund the full captured amount).
+ */
+export async function refundRazorpayPayment(paymentId: string, fetchImpl?: Fetch): Promise<{ id: string | null; outcome: 'refunded' | 'already_refunded' | 'auto_released' }> {
+  const p = await fetchRazorpayPayment(paymentId, fetchImpl);
+  if (p.status === 'refunded' || (p.amount_refunded ?? 0) >= p.amount) return { id: null, outcome: 'already_refunded' };
+  if (p.status === 'authorized' || p.status === 'failed' || p.status === 'created') return { id: null, outcome: 'auto_released' };
+  const r = await call<{ id: string }>(`/payments/${encodeURIComponent(paymentId)}/refund`, {}, fetchImpl);
+  return { id: r.id, outcome: 'refunded' };
 }
